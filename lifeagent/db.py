@@ -104,6 +104,46 @@ CREATE TABLE IF NOT EXISTS goals (
     created_at  TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS clients (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    name        TEXT NOT NULL UNIQUE,
+    contact     TEXT,
+    source      TEXT,                       -- referral / linkedin / x / upwork / direct ...
+    currency    TEXT NOT NULL DEFAULT 'IRT',
+    default_rate REAL,                      -- per hour, in currency
+    status      TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('lead', 'active', 'past')),
+    notes       TEXT,
+    created_at  TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS projects (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    client_id   INTEGER REFERENCES clients(id),
+    title       TEXT NOT NULL,
+    status      TEXT NOT NULL DEFAULT 'active'
+                CHECK (status IN ('lead', 'proposal', 'active', 'paused', 'done', 'lost')),
+    billing     TEXT NOT NULL DEFAULT 'hourly' CHECK (billing IN ('hourly', 'fixed')),
+    rate        REAL,                       -- hourly rate, or the fixed price
+    currency    TEXT NOT NULL DEFAULT 'IRT',
+    estimate_hours REAL,
+    deadline    TEXT,                       -- YYYY-MM-DD
+    next_action TEXT,
+    next_action_date TEXT,                  -- YYYY-MM-DD, for follow-ups
+    notes       TEXT,
+    created_at  TEXT NOT NULL,
+    updated_at  TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS time_entries (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    project_id  INTEGER NOT NULL REFERENCES projects(id),
+    start       TEXT NOT NULL,              -- ISO datetime with offset
+    end         TEXT,                       -- NULL while the timer runs
+    minutes     REAL,
+    note        TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_time_start ON time_entries(start);
+
 CREATE TABLE IF NOT EXISTS reminders (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     chat_id     INTEGER NOT NULL,

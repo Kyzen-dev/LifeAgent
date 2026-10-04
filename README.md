@@ -8,6 +8,9 @@
 
 | حوزه | چه کاری می‌کند |
 |---|---|
+| 🧑‍💻 فریلنس | مشتری‌ها و پروژه‌ها، pipeline فروش و پیگیری، تایمر و ثبت ساعت، نرخ مؤثر ساعتی، هشدار scope creep، پروپوزال و تخمین، مسیر مشتری خارجی دلاری |
+| 🤖 رشد AI Engineer | مشاور معماری agent (LangGraph/RAG/eval)، خلاصه هفتگی اخبار AI، برند شخصی در LinkedIn و X، تمرین انگلیسی کاری |
+| 🕌 معنوی | یادآور اوقات شرعی (صبح، ظهر، مغرب) با دکمه «خواندم» که در عادت‌ها ثبت می‌شود |
 | 💼 کار و بهره‌وری | مدیریت کارها و اهداف، تخلیه ذهن و مرتب‌سازی، تایم‌بلاکینگ و کار عمیق، ایمیل و پیش‌نویس پاسخ، تقویم و آمادگی جلسه |
 | 🐙 برنامه‌نویسی | خلاصه PRها/issueها/CI، code review، دیباگ سیستماتیک، مستندات به‌روز کتابخانه‌ها |
 | 🚀 مسیر شغلی | رزومه متناسب با آگهی، آمادگی مصاحبه، مذاکره حقوق، کار ریموت و مهاجرت کاری |
@@ -18,7 +21,7 @@
 | 🧭 تصمیم‌گیری | سنجیدن ایده با پنل ۵ نفره و حکم GO/RESHAPE/KILL، چارچوب ۱۰/۱۰/۱۰ برای تصمیم‌های سخت (کار، مهاجرت، خرید بزرگ) |
 | 📄 فایل‌ها | ساخت Word، Excel، PowerPoint، PDF و نمودار با فارسی راست‌چین درست |
 | 🌤 داده زنده | آب‌وهوا، قیمت رمزارز و نرخ ارز جهانی، زیرنویس YouTube برای خلاصه/یادگیری |
-| ⏰ فعال (proactive) | گزارش صبحگاهی، چک‌این شبانه، بازبینی هفتگی (جمعه)، گزارش مالی اول هر ماه شمسی، یادآورها |
+| ⏰ فعال (proactive) | گزارش صبح (۸)، پیگیری ظهر (۱۴، فقط اگر حرف مفیدی هست)، چک‌این شب (۲۳)، خلاصه AI (پنجشنبه ۱۰)، بازبینی هفتگی (جمعه ۱۸)، گزارش مالی اول ماه شمسی، اوقات شرعی، یادآورها |
 | 🎙️ ورودی‌ها | متن، پیام صوتی فارسی، عکس، PDF و هر فایل دیگر |
 | 🧠 حافظه | پروفایل بلندمدت (`memory/profile.md`) + پایگاه دانش Markdown (`notes/`) + ادامه گفتگو بعد از ری‌استارت |
 
@@ -48,15 +51,17 @@ Telegram ──► lifeagent (python-telegram-bot)
                 └─ SQLite ──► sessionها، هزینه API، داده‌های شخصی
 ```
 
-### Skills (در `workspace/.claude/skills/`) — ۲۲ مهارت
+### Skills (در `workspace/.claude/skills/`) — ۳۰ مهارت
 
 | گروه | مهارت‌ها |
 |---|---|
-| روال‌ها | `onboarding` · `morning-brief` · `evening-checkin` · `weekly-review` |
+| روال‌ها | `onboarding` · `morning-brief` · `midday-checkin` · `evening-checkin` · `weekly-review` |
+| فریلنس | `freelance-ops` · `client-acquisition` |
+| رشد AI Engineer | `agent-architect` · `ai-digest` · `personal-brand` · `english-coach` |
 | بهره‌وری | `capture` · `deep-work` · `email-triage` · `meeting-prep` · `office-docs` |
 | مالی | `finance-report` · `receipt-scan` · `market-watch` |
 | رشد و یادگیری | `learning-plan` · `deepread` · `career-coach` |
-| سلامت | `health-report` |
+| سلامت | `healthy-gain` · `health-report` |
 | تحقیق و تصمیم | `deep-research` · `decision-helper` · `discernment-nudge` |
 | برنامه‌نویسی | `dev-digest` · `systematic-debugging` |
 | خودبهبودی | `skill-creator` (دستیار می‌تواند برای خودش مهارت جدید بسازد) |
@@ -72,7 +77,8 @@ alirezarezvani/claude-skills) و با مجوزشان در `workspace/.claude/ski
 `finance_summary` · `habit_create` · `habit_archive` · `habit_log` · `habit_status` · `health_log` ·
 `health_history` · `journal_add` · `journal_recent` · `task_add` · `task_list` · `task_update` · `goal_set` ·
 `goal_list` · `reminder_add` · `reminder_list` · `reminder_cancel` · `date_convert` · `send_file` ·
-`weather_forecast` · `market_prices` · `youtube_transcript`
+`weather_forecast` · `market_prices` · `youtube_transcript` · `prayer_times` · `client_upsert` · `client_list` ·
+`project_upsert` · `project_list` · `timer_start` · `timer_stop` · `timer_status` · `time_log` · `time_report`
 
 ---
 
@@ -95,6 +101,10 @@ docker compose logs -f
 ```
 حالا در تلگرام به ربات `/start` بفرست و بعد بنویس: **«سلام، بیا با هم آشنا بشیم»** تا onboarding شروع شود
 و دستیار پروفایلت را بسازد.
+
+**پروفایل شخصی آماده:** اگر فایل `profile.md` شخصی‌سازی‌شده داری، قبل از اولین اجرا آن را در
+`workspace/memory/profile.md` روی سرور بگذار (این مسیر در git نیست). در اولین گفتگو، دستیار بخش
+«راه‌اندازی اولیه» آن را اجرا می‌کند: عادت‌ها، اهداف، وزن اولیه و برنامه‌ها را می‌سازد.
 
 ### ۳. اتصال Google (Gmail / Calendar / Drive) — اختیاری
 از سرور [google_workspace_mcp](https://github.com/taylorwilsdon/google_workspace_mcp) استفاده می‌شود.
@@ -165,8 +175,9 @@ docker compose logs -f
 
 ## هزینه
 هزینه بر اساس توکن مصرفی Anthropic API است. `/cost` هزینه تقریبی امروز و این ماه را نشان می‌دهد و
-`DAILY_BUDGET_USD` وقتی از سقف روزانه بگذری هشدار می‌دهد. برای کاهش هزینه `LIFEAGENT_EFFORT=low`
-یا مدل ارزان‌تر (مثلاً `claude-sonnet-5-5`) را امتحان کن و روال‌هایی که لازم نداری را خالی بگذار.
+`DAILY_BUDGET_USD` وقتی از سقف روزانه بگذری هشدار می‌دهد. مدل پیش‌فرض اقتصادی است
+(`claude-sonnet-5-5` با effort=medium). برای کاهش بیشتر `LIFEAGENT_EFFORT=low` و خالی گذاشتن روال‌های
+غیرضروری؛ برای بیشترین کیفیت `LIFEAGENT_MODEL=claude-opus-5-5`.
 
 ## پشتیبان‌گیری
 همه داده‌ها در `data/` (SQLite، sessionها، توکن گوگل) و `workspace/memory` و `workspace/notes` است:

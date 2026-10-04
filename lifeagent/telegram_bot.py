@@ -29,7 +29,8 @@ from .agent import AgentPool
 from .approvals import ApprovalManager
 from .context import AppContext
 from .formatting import md_to_html, split_markdown
-from .scheduler import Scheduler
+from .prompts import SKIP
+from .scheduler import Scheduler, log_habit
 from .voice import transcribe
 from .workspace import ensure_workspace
 
@@ -48,6 +49,8 @@ HELP_TEXT = """\
 سلام! من دستیار شخصی‌ات هستم 👋
 
 هر چیزی را عادی بنویس یا ویس بفرست، مثلاً:
+• «شروع کار روی پروژه چت‌بات» / «تموم کردم» → ثبت ساعت کار
+• «این هفته چند ساعت کار کردم و چقدر درآوردم؟» / «برای این پروژه پروپوزال بنویس»
 • «۲۵۰ تومن ناهار دادم»  → ثبت هزینه
 • «فردا ساعت ۱۰ یادم بنداز به علی زنگ بزنم»
 • «امروز ۳۰ دقیقه دویدم» / «وزنم ۷۸ شد»
@@ -71,6 +74,11 @@ TOOL_LABELS: list[tuple[str, str]] = [
     ("mcp__life__task", "📋 کارها"),
     ("mcp__life__goal", "🎯 اهداف"),
     ("mcp__life__reminder", "⏰ یادآورها"),
+    ("mcp__life__client", "🤝 مشتری‌ها"),
+    ("mcp__life__project", "💼 پروژه‌ها"),
+    ("mcp__life__timer", "⏱ ثبت زمان کار"),
+    ("mcp__life__time_", "⏱ ثبت زمان کار"),
+    ("mcp__life__prayer", "🕌 اوقات شرعی"),
     ("mcp__life__send_file", "📤 ارسال فایل"),
     ("mcp__google__", "🔵 Google"),
     ("mcp__github__", "🐙 GitHub"),
@@ -157,11 +165,14 @@ async def _keep_typing(bot: Any, chat_id: int) -> None:
         await asyncio.sleep(4.5)
 
 
-async def run_turn(app: AppContext, chat_id: int, prompt: str) -> None:
-    """Send one user turn to the agent and deliver its reply to the chat."""
+async def run_turn(app: AppContext, chat_id: int, prompt: str, routine: bool = False) -> None:
+    """Send one user turn to the agent and deliver its reply to the chat.
+
+    Routine turns may answer with just SKIP when there is nothing worth sending.
+    """
     bot = app.bot
     agent = app.agents.get(chat_id)
-    if agent.lock.locked():
+    if agent.lock.locked() and not routine:
         await bot.send_message(chat_id, "📥 در صف؛ بعد از تمام شدن کار فعلی بررسی می‌کنم.")
 
     progress = Progress(bot, chat_id)
@@ -176,6 +187,9 @@ async def run_turn(app: AppContext, chat_id: int, prompt: str) -> None:
         typing.cancel()
         await progress.close()
 
+    if routine and reply.text.strip().strip("[]`*").upper() == SKIP:
+        log.info("routine had nothing to report")
+        return
     await send_markdown(bot, chat_id, reply.text)
     await _budget_warning(app, chat_id)
 
@@ -258,7 +272,10 @@ async def on_voice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     data = bytes(await (await media.get_file()).download_as_bytearray())
     filename = "voice.ogg" if message.voice else (message.audio.file_name or "audio.mp3")
     try:
-        text = await transcribe(data, filename, app.settings.openai_api_key, app.settings.transcribe_model)
+        text = await transcribe(
+            data, filename, app.settings.openai_api_key, app.settings.transcribe_model,
+            app.settings.transcribe_language,
+        )
     except Exception as exc:  # noqa: BLE001
         log.exception("transcription failed")
         await message.reply_text(f"❌ تبدیل گفتار به متن ناموفق بود: {exc}"[:500])
@@ -324,6 +341,13 @@ async def on_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         await query.answer("ثبت شد" if found else "این درخواست منقضی شده است")
         return
 
+    if parts[0] == "prayer" and len(parts) == 3 and parts[1] == "done":
+        await log_habit(app, "نماز")
+        await query.answer("قبول باشد 🤲")
+        with suppress(BadRequest):
+            await query.edit_message_text((query.message.text or "") + "\n\n✅ ثبت شد", reply_markup=None)
+        return
+
     if parts[0] == "rem" and len(parts) == 3:
         action, reminder_id = parts[1], int(parts[2])
         if action == "done":
@@ -357,7 +381,7 @@ def build_application(app: AppContext) -> Application:
         app.bot = application.bot
         app.approvals = ApprovalManager(application.bot, s.approval_timeout_s)
         app.agents = AgentPool(app)
-        app.scheduler = Scheduler(app, lambda chat_id, prompt: run_turn(app, chat_id, prompt))
+        app.scheduler = Scheduler(app, lambda chat_id, prompt: run_turn(app, chat_id, prompt, routine=True))
         await app.scheduler.start()
         await application.bot.set_my_commands([BotCommand(c, d) for c, d in COMMANDS])
         log.info("LifeAgent is up (model=%s)", s.model)

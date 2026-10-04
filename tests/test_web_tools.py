@@ -47,3 +47,18 @@ def test_youtube_id_regex():
     for url in ("https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=1", "https://youtu.be/dQw4w9WgXcQ",
                 "https://youtube.com/shorts/dQw4w9WgXcQ"):
         assert web._YT_ID_RE.search(url).group(1) == "dQw4w9WgXcQ"
+
+
+async def test_prayer_times_parsing(tool_ctx, monkeypatch):
+    async def fake_get_json(url, params):
+        assert "timingsByCity/04-10-2026" in url and params["method"] == 7
+        return {"code": 200, "data": {"timings": {
+            "Fajr": "04:51", "Sunrise": "06:13", "Dhuhr": "11:56 (+0330)", "Asr": "15:20",
+            "Sunset": "17:39", "Maghrib": "17:59", "Isha": "18:53", "Imsak": "04:41", "Midnight": "23:15",
+        }}}
+
+    monkeypatch.setattr(web, "_get_json", fake_get_json)
+    t = {x.name: x.handler for x in web.build(tool_ctx)}
+    data = json.loads((await t["prayer_times"]({"date": "1405/07/12"}))["content"][0]["text"])
+    assert data["times"]["اذان ظهر"] == "11:56" and "Imsak" not in str(data)
+    assert data["date_jalali"] == "1405/07/12"

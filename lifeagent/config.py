@@ -45,9 +45,18 @@ class Settings:
     evening_checkin_time: str | None
     weekly_review: str | None
     monthly_report_time: str | None
+    midday_checkin_time: str | None
+    ai_digest: str | None
+
+    prayer_reminders: bool
+    prayer_city: str
+    prayer_country: str
+    prayer_method: int
+    prayer_names: tuple[str, ...]
 
     openai_api_key: str | None
     transcribe_model: str
+    transcribe_language: str | None
 
     google_client_id: str | None
     google_client_secret: str | None
@@ -101,18 +110,29 @@ class Settings:
             allowed_user_ids=frozenset(user_ids),
             # Scheduled briefs go to the first listed user's private chat.
             owner_chat_id=user_ids[0],
-            model=_env("LIFEAGENT_MODEL", "claude-opus-5-5"),
+            model=_env("LIFEAGENT_MODEL", "claude-sonnet-5-5"),
             effort=_env("LIFEAGENT_EFFORT", "medium"),
             max_turns=int(_env("LIFEAGENT_MAX_TURNS", "40")),
             tz=ZoneInfo(_env("LIFEAGENT_TIMEZONE", "Asia/Tehran")),
             data_dir=data_dir,
             workspace_dir=workspace_dir,
-            morning_brief_time=_env("MORNING_BRIEF_TIME", "07:30"),
-            evening_checkin_time=_env("EVENING_CHECKIN_TIME", "22:00"),
+            morning_brief_time=_env("MORNING_BRIEF_TIME", "08:00"),
+            evening_checkin_time=_env("EVENING_CHECKIN_TIME", "23:00"),
             weekly_review=_env("WEEKLY_REVIEW", "fri 18:00"),
             monthly_report_time=_env("MONTHLY_REPORT_TIME", "09:00"),
+            midday_checkin_time=_env("MIDDAY_CHECKIN_TIME", "14:00"),
+            ai_digest=_env("AI_DIGEST", "thu 10:00"),
+            prayer_reminders=_env_bool("PRAYER_REMINDERS", False),
+            prayer_city=_env("PRAYER_CITY", _env("LIFEAGENT_CITY", "Tehran")),
+            prayer_country=_env("PRAYER_COUNTRY", "Iran"),
+            # 7 = Institute of Geophysics, University of Tehran (aladhan.com methods)
+            prayer_method=int(_env("PRAYER_METHOD", "7")),
+            prayer_names=tuple(
+                x.strip().lower() for x in _env("PRAYER_TIMES", "fajr,dhuhr,maghrib").split(",") if x.strip()
+            ),
             openai_api_key=_env("OPENAI_API_KEY"),
             transcribe_model=_env("TRANSCRIBE_MODEL", "whisper-1"),
+            transcribe_language=_env("TRANSCRIBE_LANGUAGE"),
             google_client_id=_env("GOOGLE_OAUTH_CLIENT_ID"),
             google_client_secret=_env("GOOGLE_OAUTH_CLIENT_SECRET"),
             google_user_email=_env("USER_GOOGLE_EMAIL"),

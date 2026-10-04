@@ -4,13 +4,15 @@ from __future__ import annotations
 
 import asyncio
 import re
+from datetime import date
 from typing import Any
 
 import httpx
 from claude_agent_sdk import tool
 
 from ..context import ToolContext
-from .common import INT, STR, err, ok, safe, schema
+from .. import jalali
+from .common import DATE, INT, STR, err, ok, safe, schema
 
 TIMEOUT = httpx.Timeout(20.0)
 
@@ -25,12 +27,32 @@ WEATHER_CODES = {
 
 _YT_ID_RE = re.compile(r"(?:v=|youtu\.be/|shorts/|embed/|live/)([A-Za-z0-9_-]{11})")
 
+PRAYER_NAMES_FA = {
+    "fajr": "اذان صبح", "sunrise": "طلوع آفتاب", "dhuhr": "اذان ظهر", "asr": "عصر",
+    "sunset": "غروب آفتاب", "maghrib": "اذان مغرب", "isha": "عشاء", "midnight": "نیمه‌شب شرعی",
+}
+
 
 async def _get_json(url: str, params: dict[str, Any]) -> Any:
     async with httpx.AsyncClient(timeout=TIMEOUT) as client:
         response = await client.get(url, params=params)
         response.raise_for_status()
         return response.json()
+
+
+async def fetch_prayer_times(day: date, city: str, country: str, method: int) -> dict[str, str]:
+    """{'fajr': 'HH:MM', 'dhuhr': ..., ...} for one day, from api.aladhan.com."""
+    data = await _get_json(
+        f"https://api.aladhan.com/v1/timingsByCity/{day:%d-%m-%Y}",
+        {"city": city, "country": country, "method": method},
+    )
+    timings = data["data"]["timings"]
+    # Values look like "11:56" or "11:56 (+0330)"; keep HH:MM.
+    return {
+        name.lower(): value.split()[0]
+        for name, value in timings.items()
+        if name.lower() in PRAYER_NAMES_FA
+    }
 
 
 def build(ctx: ToolContext) -> list:
@@ -160,4 +182,22 @@ def build(ctx: ToolContext) -> list:
         return ok({"video_id": video_id, "language": language, "truncated": len(text) > limit,
                    "chars": len(text), "text": text[:limit]})
 
-    return [weather_forecast, market_prices, youtube_transcript]
+    @tool(
+        "prayer_times",
+        "اوقات شرعی یک روز (پیش‌فرض: امروز، شهر کاربر، روش مؤسسه ژئوفیزیک تهران).",
+        schema({"date": DATE, "city": {"type": "string", "description": "نام شهر به انگلیسی، مثل Tehran"}}),
+    )
+    @safe
+    async def prayer_times(args: dict[str, Any]) -> dict[str, Any]:
+        s = ctx.settings
+        day = jalali.parse_date(args["date"]) if args.get("date") else ctx.now().date()
+        times = await fetch_prayer_times(day, args.get("city") or s.prayer_city, s.prayer_country, s.prayer_method)
+        return ok(
+            {
+                "date_jalali": jalali.to_jalali_str(day),
+                "city": args.get("city") or s.prayer_city,
+                "times": {PRAYER_NAMES_FA[k]: v for k, v in times.items()},
+            }
+        )
+
+    return [weather_forecast, market_prices, youtube_transcript, prayer_times]

@@ -15,6 +15,7 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from . import prompts
 from .context import AppContext
 from .db import utcnow_iso
+from .tools.web import PRAYER_NAMES_FA, fetch_prayer_times
 
 log = logging.getLogger(__name__)
 
@@ -25,6 +26,24 @@ WEEKDAYS = ("sat", "sun", "mon", "tue", "wed", "thu", "fri")
 def _parse_hhmm(value: str) -> tuple[int, int]:
     hour, minute = value.strip().split(":")
     return int(hour), int(minute)
+
+
+def prayer_keyboard(name: str) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup([[InlineKeyboardButton("✅ خواندم", callback_data=f"prayer:done:{name}")]])
+
+
+async def log_habit(app: AppContext, name: str, unit: str | None = None, target_per_week: int = 7) -> None:
+    """Record one completion of a habit today, creating the habit if needed."""
+    await app.db.execute(
+        "INSERT INTO habits (name, target_per_week, unit, created_at) VALUES (?, ?, ?, ?) "
+        "ON CONFLICT(name) DO NOTHING",
+        (name, target_per_week, unit, utcnow_iso()),
+    )
+    habit = await app.db.fetchone("SELECT id FROM habits WHERE name = ?", (name,))
+    await app.db.execute(
+        "INSERT INTO habit_logs (habit_id, date, value) VALUES (?, ?, 1)",
+        (habit["id"], datetime.now(app.settings.tz).date().isoformat()),
+    )
 
 
 def reminder_keyboard(reminder_id: int) -> InlineKeyboardMarkup:
@@ -48,6 +67,8 @@ class Scheduler:
 
     async def start(self) -> None:
         self._add_routines()
+        if self.app.settings.prayer_reminders:
+            await self.schedule_prayers()
         for row in await self.app.db.fetchall("SELECT * FROM reminders WHERE active = 1"):
             self.schedule_reminder(row)
         self.sched.start()
@@ -143,6 +164,22 @@ class Scheduler:
         if s.evening_checkin_time:
             h, m = _parse_hhmm(s.evening_checkin_time)
             add("routine:evening", CronTrigger(hour=h, minute=m, timezone=self.tz), prompts.EVENING_CHECKIN)
+        if s.midday_checkin_time:
+            h, m = _parse_hhmm(s.midday_checkin_time)
+            add("routine:midday", CronTrigger(hour=h, minute=m, timezone=self.tz), prompts.MIDDAY_CHECKIN)
+        if s.ai_digest:
+            day, hhmm = s.ai_digest.split()
+            h, m = _parse_hhmm(hhmm)
+            add(
+                "routine:ai_digest",
+                CronTrigger(day_of_week=day.lower(), hour=h, minute=m, timezone=self.tz),
+                prompts.AI_DIGEST,
+            )
+        if s.prayer_reminders:
+            self.sched.add_job(
+                self.schedule_prayers, CronTrigger(hour=0, minute=5, timezone=self.tz),
+                id="routine:prayers", replace_existing=True, misfire_grace_time=3600,
+            )
         if s.weekly_review:
             day, hhmm = s.weekly_review.split()
             h, m = _parse_hhmm(hhmm)
@@ -161,6 +198,41 @@ class Scheduler:
                 replace_existing=True,
                 misfire_grace_time=3600,
             )
+
+    # --- prayer times -----------------------------------------------------
+
+    async def schedule_prayers(self) -> None:
+        """Schedule today's remaining prayer-time reminders; retry later if the API is down."""
+        s = self.app.settings
+        now = datetime.now(self.tz)
+        try:
+            times = await fetch_prayer_times(now.date(), s.prayer_city, s.prayer_country, s.prayer_method)
+        except Exception:  # noqa: BLE001 - network/API failure must not kill the scheduler
+            log.warning("could not fetch prayer times; retrying in 30 minutes", exc_info=True)
+            self.sched.add_job(
+                self.schedule_prayers, DateTrigger(run_date=now + timedelta(minutes=30), timezone=self.tz),
+                id="routine:prayers-retry", replace_existing=True,
+            )
+            return
+        for name in s.prayer_names:
+            if name not in times:
+                continue
+            hour, minute = _parse_hhmm(times[name])
+            at = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+            if at <= now:
+                continue
+            self.sched.add_job(
+                self._fire_prayer, DateTrigger(run_date=at, timezone=self.tz),
+                id=f"prayer:{name}", args=[name, times[name]], replace_existing=True,
+                misfire_grace_time=15 * 60,
+            )
+
+    async def _fire_prayer(self, name: str, hhmm: str) -> None:
+        await self.app.bot.send_message(
+            chat_id=self.app.settings.owner_chat_id,
+            text=f"🕌 {PRAYER_NAMES_FA.get(name, name)} — {hhmm}",
+            reply_markup=prayer_keyboard(name),
+        )
 
     async def _monthly_check(self) -> None:
         today = jdatetime.date.fromgregorian(date=datetime.now(self.tz).date())
