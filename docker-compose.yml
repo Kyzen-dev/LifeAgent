@@ -1,0 +1,14 @@
+services:
+  lifeagent:
+    build: .
+    container_name: lifeagent
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - ./data:/data                    # SQLite DB, ~/.claude sessions, Google tokens
+      - ./workspace:/app/workspace      # memory, notes, skills, subagents (editable on the host)
+    ports:
+      # Google OAuth callback for the one-time login; reachable only via SSH tunnel.
+      # If the callback does not arrive (server bound to 127.0.0.1 inside the container),
+      # temporarily replace `ports` with `network_mode: host` for the first login.
+      - "127.0.0.1:8000:8000"

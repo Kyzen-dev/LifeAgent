@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+data/
+.pytest_cache/
+
+# Personal data written by the agent at runtime
+workspace/memory/*
+workspace/notes/*
+workspace/inbox/*
+workspace/outbox/*
+!workspace/*/.gitkeep
+workspace/.claude/settings.local.json

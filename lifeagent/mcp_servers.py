@@ -1,0 +1,45 @@
+"""External MCP servers: Google Workspace (Gmail/Calendar/Drive/Tasks) and GitHub."""
+
+from __future__ import annotations
+
+from typing import Any
+
+from .config import Settings
+
+
+def external_mcp_servers(settings: Settings) -> dict[str, dict[str, Any]]:
+    servers: dict[str, dict[str, Any]] = {}
+
+    if settings.google_enabled:
+        # https://github.com/taylorwilsdon/google_workspace_mcp — runs as a stdio
+        # child of the Claude CLI. Its OAuth callback listens on WORKSPACE_MCP_PORT;
+        # see README for the one-time login over an SSH tunnel.
+        env = {
+            "GOOGLE_OAUTH_CLIENT_ID": settings.google_client_id or "",
+            "GOOGLE_OAUTH_CLIENT_SECRET": settings.google_client_secret or "",
+            "OAUTHLIB_INSECURE_TRANSPORT": "1",
+        }
+        if settings.google_user_email:
+            env["USER_GOOGLE_EMAIL"] = settings.google_user_email
+        servers["google"] = {
+            "type": "stdio",
+            "command": "uvx",
+            "args": [
+                "workspace-mcp",
+                "--tool-tier", "core",
+                "--tools", "gmail", "calendar", "drive", "tasks", "docs", "sheets",
+            ],
+            "env": env,
+        }
+
+    if settings.github_enabled:
+        servers["github"] = {
+            "type": "http",
+            "url": "https://api.githubcopilot.com/mcp/",
+            "headers": {
+                "Authorization": f"Bearer {settings.github_token}",
+                "X-MCP-Toolsets": settings.github_toolsets,
+            },
+        }
+
+    return servers

@@ -1,0 +1,9 @@
+[project]
+name = "lifeagent"
+version = "0.1.0"
+description = "Personal Telegram assistant built on the Claude Agent SDK"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
