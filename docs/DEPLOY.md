@@ -27,7 +27,7 @@
 
 ## A. تست با GitHub Codespaces
 
-1. مطمئن شو کد روی GitHub است (شاخه `claude/brave-feynman-oienzb` یا `main` بعد از merge).
+1. کد روی GitHub است (شاخه پیش‌فرض ریپو).
 2. **Secrets:** GitHub → Settings → Codespaces → **New secret**، و برای هر کدام به ریپوی LifeAgent دسترسی بده:
    `TELEGRAM_BOT_TOKEN` (توکن ربات **تستی**)، `TELEGRAM_ALLOWED_USER_IDS`، `ANTHROPIC_API_KEY`، و اختیاری `OPENAI_API_KEY`، `GITHUB_PERSONAL_ACCESS_TOKEN`.
    (تنظیمات غیرمحرمانه مثل ساعت روال‌ها از مقدارهای پیش‌فرض می‌آیند؛ برای یادآور اذان یک secret به نام `PRAYER_REMINDERS` با مقدار `true` هم بساز.)
@@ -62,7 +62,7 @@
 روی سرور:
 ```bash
 # اگر ریپو خصوصی است، یک fine-grained token با دسترسی Read به این ریپو بساز:
-git clone --branch claude/brave-feynman-oienzb https://<TOKEN>@github.com/Kyzen-dev/LifeAgent.git ~/lifeagent
+git clone https://<TOKEN>@github.com/Kyzen-dev/LifeAgent.git ~/lifeagent
 ```
 از کامپیوتر خودت دو فایل شخصی را بفرست:
 ```bash
@@ -72,7 +72,7 @@ scp -i ~/path/to/key profile.md ubuntu@<PUBLIC_IP>:~/lifeagent/workspace/memory/
 بعد روی سرور:
 ```bash
 cd ~/lifeagent
-BRANCH=claude/brave-feynman-oienzb bash deploy/setup-server.sh
+bash deploy/setup-server.sh
 ```
 این اسکریپت به ترتیب:
 1. اگر رم کم باشد swap می‌سازد.

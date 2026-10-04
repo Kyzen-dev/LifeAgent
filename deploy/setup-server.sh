@@ -6,12 +6,12 @@
 #
 # Variables you can override:
 #   REPO_URL  git URL (for a private repo: https://<token>@github.com/<owner>/<repo>.git)
-#   BRANCH    branch to deploy (default: main)
+#   BRANCH    branch to deploy (default: the repository default branch, or the current one when updating)
 #   DIR       install directory (default: ~/lifeagent)
 set -euo pipefail
 
 REPO_URL="${REPO_URL:-https://github.com/Kyzen-dev/LifeAgent.git}"
-BRANCH="${BRANCH:-main}"
+BRANCH="${BRANCH:-}"
 DIR="${DIR:-$HOME/lifeagent}"
 
 say() { printf '\n\033[1;32m==> %s\033[0m\n' "$*"; }
@@ -37,11 +37,14 @@ docker info >/dev/null 2>&1 || DOCKER="sudo docker"
 # 3. Code.
 if [ -d "$DIR/.git" ]; then
   say "Updating code in $DIR"
-  git -C "$DIR" fetch origin "$BRANCH" && git -C "$DIR" checkout "$BRANCH" && git -C "$DIR" pull --ff-only origin "$BRANCH"
+  if [ -n "$BRANCH" ]; then
+    git -C "$DIR" fetch origin "$BRANCH" && git -C "$DIR" checkout "$BRANCH"
+  fi
+  git -C "$DIR" pull --ff-only
 else
-  say "Cloning $BRANCH into $DIR"
+  say "Cloning ${BRANCH:-default branch} into $DIR"
   command -v git >/dev/null || { sudo apt-get update -y && sudo apt-get install -y git; }
-  git clone --branch "$BRANCH" "$REPO_URL" "$DIR"
+  git clone ${BRANCH:+--branch "$BRANCH"} "$REPO_URL" "$DIR"
 fi
 cd "$DIR"
 
