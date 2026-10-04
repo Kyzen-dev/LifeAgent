@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from claude_agent_sdk import tool
@@ -12,13 +12,15 @@ from ..context import ToolContext
 from ..db import utcnow_iso
 from .common import DATE, INT, NUM, STR, ok, safe, schema
 
-PROJECT_STATUS = ["lead", "proposal", "active", "paused", "done", "lost"]
-OPEN_STATUSES = ("lead", "proposal", "active", "paused")
+PROJECT_STATUS = ["lead", "proposal", "interview", "active", "paused", "done", "lost"]
+OPEN_STATUSES = ("lead", "proposal", "interview", "active", "paused")
+# Status → timestamp column stamped the first time a project reaches that stage.
+STAGE_STAMPS = {"proposal": "proposal_sent_at", "interview": "interviewed_at", "active": "hired_at"}
 PROJECT_REF = {"type": "string", "description": "شناسه یا عنوان پروژه"}
 CLIENT_FIELDS = ("contact", "source", "currency", "default_rate", "status", "notes")
 PROJECT_FIELDS = (
     "title", "status", "billing", "rate", "currency", "estimate_hours", "deadline",
-    "next_action", "next_action_date", "notes",
+    "next_action", "next_action_date", "notes", "source", "url", "connects",
 )
 
 
@@ -131,8 +133,9 @@ def build(ctx: ToolContext) -> list:
     @tool(
         "project_upsert",
         "ایجاد پروژه/فرصت جدید (بدون id) یا به‌روزرسانی (با id). برای pipeline فروش هم استفاده "
-        "می‌شود: lead → proposal → active → done (یا lost). next_action و next_action_date برای "
-        "پیگیری (مثلاً «follow-up پروپوزال» در ۳ روز بعد).",
+        "می‌شود: lead (آگهی ذخیره‌شده) → proposal (ارسال شد) → interview → active (استخدام) → done "
+        "(یا lost). source مثل upwork، connects = Connects خرج‌شده، url = لینک آگهی. "
+        "next_action و next_action_date برای پیگیری (مثلاً «follow-up» سه روز بعد).",
         schema(
             {
                 "id": INT,
@@ -147,6 +150,9 @@ def build(ctx: ToolContext) -> list:
                 "next_action": STR,
                 "next_action_date": DATE,
                 "notes": STR,
+                "source": {"type": "string", "description": "upwork, linkedin, x, referral, direct"},
+                "url": STR,
+                "connects": INT,
             }
         ),
     )
@@ -160,7 +166,10 @@ def build(ctx: ToolContext) -> list:
             values["currency"] = values["currency"].upper()
         if args.get("client"):
             values["client_id"] = await _client_id(args["client"])
+        if values.get("source"):
+            values["source"] = values["source"].strip().lower()
         now = utcnow_iso()
+        stamp = STAGE_STAMPS.get(values.get("status", ""))
         if args.get("id") is None:
             if not values.get("title"):
                 raise ValueError("برای پروژه جدید عنوان لازم است")
@@ -171,6 +180,8 @@ def build(ctx: ToolContext) -> list:
                 values["currency"] = client["currency"]
                 if client["default_rate"] and "rate" not in values:
                     values["rate"] = client["default_rate"]
+            if stamp:
+                values[stamp] = now
             cols = [*values, "created_at", "updated_at"]
             project_id = await db.execute(
                 f"INSERT INTO projects ({', '.join(cols)}) VALUES ({', '.join('?' * len(cols))})",
@@ -183,6 +194,8 @@ def build(ctx: ToolContext) -> list:
             f"UPDATE projects SET {', '.join(f'{k} = ?' for k in values)}, updated_at = ? WHERE id = ?",
             [*values.values(), now, args["id"]],
         )
+        if stamp:  # first time reaching this stage only
+            await db.execute(f"UPDATE projects SET {stamp} = ? WHERE id = ? AND {stamp} IS NULL", (now, args["id"]))
         return ok({"id": args["id"], "updated": True})
 
     @tool(
@@ -353,7 +366,49 @@ def build(ctx: ToolContext) -> list:
             }
         )
 
+    @tool(
+        "pipeline_stats",
+        "آمار قیف فروش در N روز اخیر (پیش‌فرض ۳۰)، اختیاری فقط یک منبع مثل upwork: تعداد پروپوزال، "
+        "مصاحبه، استخدام، نرخ تبدیل، Connects خرج‌شده و هزینه هر استخدام.",
+        schema({"days": INT, "source": STR}),
+    )
+    @safe
+    async def pipeline_stats(args: dict[str, Any]) -> dict[str, Any]:
+        days = int(args.get("days") or 30)
+        # proposal_sent_at is stored as UTC ISO text, so compare in UTC.
+        since_utc = (ctx.now() - timedelta(days=days)).astimezone(timezone.utc).isoformat(timespec="seconds")
+        params: list[Any] = [since_utc]
+        extra = ""
+        if args.get("source"):
+            extra = " AND source = ?"
+            params.append(args["source"].strip().lower())
+        rows = await db.fetchall(
+            "SELECT status, connects, interviewed_at, hired_at FROM projects "
+            f"WHERE proposal_sent_at >= ?{extra}",
+            params,
+        )
+        proposals = len(rows)
+        interviews = sum(1 for r in rows if r["interviewed_at"] or r["hired_at"])
+        hires = sum(1 for r in rows if r["hired_at"])
+        connects = sum(r["connects"] or 0 for r in rows)
+        pct = lambda a, b: round(100 * a / b, 1) if b else None  # noqa: E731
+        return ok(
+            {
+                "days": days,
+                "source": args.get("source") or "all",
+                "proposals": proposals,
+                "interviews": interviews,
+                "hires": hires,
+                "interview_rate_pct": pct(interviews, proposals),
+                "hire_rate_pct": pct(hires, proposals),
+                "connects_spent": connects,
+                "connects_usd": round(connects * 0.15, 2),
+                "connects_per_hire": round(connects / hires, 1) if hires else None,
+                "still_waiting": sum(1 for r in rows if r["status"] == "proposal"),
+            }
+        )
+
     return [
-        client_upsert, client_list, project_upsert, project_list,
+        client_upsert, client_list, project_upsert, project_list, pipeline_stats,
         timer_start, timer_stop, timer_status, time_log, time_report,
     ]

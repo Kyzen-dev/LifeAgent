@@ -9,7 +9,7 @@ description: "Short proactive midday nudge (پیگیری میانه روز): che
 
 ## بررسی‌ها
 1. `timer_status`: تایمر روشن است؟ امروز چند دقیقه کار ثبت شده؟
-2. `project_list`: پروژه با `days_left` ≤ ۲ یا `follow_up_due` = true.
+2. `project_list`: پروژه با `days_left` ≤ ۲ یا `follow_up_due` = true (پیام‌های بی‌جواب مشتری Upwork را هم بپرس — سرعت پاسخ روی رتبه اثر دارد).
 3. `task_list` با overdue_only.
 4. `habit_status`: فقط یکی از مهم‌ترین عادت‌های ثبت‌نشده امروز (ترجیحاً سلامت).
 5. اگر امروز جمعه/تعطیل است یا کاربر در ژورنال گفته مریض/خسته است، فقط یک پیام همدلانه خیلی کوتاه یا SKIP.

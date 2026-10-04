@@ -56,3 +56,25 @@ async def test_timer_and_report(tool_ctx):
 
 def test_entry_times_are_aware(tool_ctx):
     assert datetime.fromisoformat(tool_ctx.now().isoformat()).tzinfo is not None
+
+
+async def test_pipeline_stats(tool_ctx):
+    t = {x.name: x.handler for x in freelance.build(tool_ctx)}
+    ids = []
+    for i in range(4):
+        r = _data(await t["project_upsert"]({"title": f"job {i}", "status": "proposal", "source": "Upwork", "connects": 10}))
+        ids.append(r["id"])
+    _data(await t["project_upsert"]({"title": "referral job", "status": "proposal", "source": "referral"}))
+    _data(await t["project_upsert"]({"id": ids[0], "status": "interview"}))
+    _data(await t["project_upsert"]({"id": ids[0], "status": "active"}))
+    _data(await t["project_upsert"]({"id": ids[1], "status": "interview"}))
+    _data(await t["project_upsert"]({"id": ids[2], "status": "lost"}))
+    stats = _data(await t["pipeline_stats"]({"source": "upwork"}))
+    assert stats["proposals"] == 4 and stats["interviews"] == 2 and stats["hires"] == 1
+    assert stats["interview_rate_pct"] == 50.0 and stats["hire_rate_pct"] == 25.0
+    assert stats["connects_spent"] == 40 and stats["connects_per_hire"] == 40.0 and stats["still_waiting"] == 1
+    assert _data(await t["pipeline_stats"]({}))["proposals"] == 5
+    # Stage timestamps are set once: going back to proposal does not reset hired_at.
+    _data(await t["project_upsert"]({"id": ids[0], "status": "done"}))
+    row = await tool_ctx.db.fetchone("SELECT hired_at FROM projects WHERE id = ?", (ids[0],))
+    assert row["hired_at"]

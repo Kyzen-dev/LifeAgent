@@ -8,7 +8,8 @@
 
 | حوزه | چه کاری می‌کند |
 |---|---|
-| 🧑‍💻 فریلنس | مشتری‌ها و پروژه‌ها، pipeline فروش و پیگیری، تایمر و ثبت ساعت، نرخ مؤثر ساعتی، هشدار scope creep، پروپوزال و تخمین، مسیر مشتری خارجی دلاری |
+| 🧑‍💻 فریلنس | مشتری‌ها و پروژه‌ها، pipeline فروش و پیگیری، تایمر و ثبت ساعت، نرخ مؤثر ساعتی، هشدار scope creep، پروپوزال و تخمین |
+| 🟢 Upwork | مسیر رشد حساب از صفر تا Top Rated: niche و پروفایل، امتیاز تناسب آگهی، پروپوزال، بودجه Connects، JSS، قیف تبدیل (`pipeline_stats`) |
 | 🤖 رشد AI Engineer | مشاور معماری agent (LangGraph/RAG/eval)، خلاصه هفتگی اخبار AI، برند شخصی در LinkedIn و X، تمرین انگلیسی کاری |
 | 🕌 معنوی | یادآور اوقات شرعی (صبح، ظهر، مغرب) با دکمه «خواندم» که در عادت‌ها ثبت می‌شود |
 | 💼 کار و بهره‌وری | مدیریت کارها و اهداف، تخلیه ذهن و مرتب‌سازی، تایم‌بلاکینگ و کار عمیق، ایمیل و پیش‌نویس پاسخ، تقویم و آمادگی جلسه |
@@ -51,12 +52,12 @@ Telegram ──► lifeagent (python-telegram-bot)
                 └─ SQLite ──► sessionها، هزینه API، داده‌های شخصی
 ```
 
-### Skills (در `workspace/.claude/skills/`) — ۳۰ مهارت
+### Skills (در `workspace/.claude/skills/`) — ۳۱ مهارت
 
 | گروه | مهارت‌ها |
 |---|---|
 | روال‌ها | `onboarding` · `morning-brief` · `midday-checkin` · `evening-checkin` · `weekly-review` |
-| فریلنس | `freelance-ops` · `client-acquisition` |
+| فریلنس | `freelance-ops` · `upwork-growth` · `client-acquisition` |
 | رشد AI Engineer | `agent-architect` · `ai-digest` · `personal-brand` · `english-coach` |
 | بهره‌وری | `capture` · `deep-work` · `email-triage` · `meeting-prep` · `office-docs` |
 | مالی | `finance-report` · `receipt-scan` · `market-watch` |
@@ -78,11 +79,15 @@ alirezarezvani/claude-skills) و با مجوزشان در `workspace/.claude/ski
 `health_history` · `journal_add` · `journal_recent` · `task_add` · `task_list` · `task_update` · `goal_set` ·
 `goal_list` · `reminder_add` · `reminder_list` · `reminder_cancel` · `date_convert` · `send_file` ·
 `weather_forecast` · `market_prices` · `youtube_transcript` · `prayer_times` · `client_upsert` · `client_list` ·
-`project_upsert` · `project_list` · `timer_start` · `timer_stop` · `timer_status` · `time_log` · `time_report`
+`project_upsert` · `project_list` · `pipeline_stats` · `timer_start` · `timer_stop` · `timer_status` · `time_log` · `time_report`
 
 ---
 
 ## راه‌اندازی
+
+> 📘 **راهنمای کامل راه‌اندازی رایگان (Codespaces برای تست، Oracle Cloud Always Free برای اجرای دائمی) و چک‌لیست تست:** [`docs/DEPLOY.md`](docs/DEPLOY.md)
+>
+> چک سلامت هر زمان: `python -m lifeagent.doctor` (با `--live` یک درخواست واقعی کوچک هم می‌فرستد).
 
 ### ۱. پیش‌نیازها
 - یک VPS لینوکسی خارج از ایران (۱ تا ۲ گیگ رم کافی است) با Docker و Docker Compose

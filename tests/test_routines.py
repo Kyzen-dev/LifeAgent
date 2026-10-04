@@ -96,3 +96,12 @@ async def test_log_habit_creates_and_logs(tool_ctx):
         "SELECT h.name, COUNT(l.id) AS n FROM habits h JOIN habit_logs l ON l.habit_id = h.id GROUP BY h.id"
     )
     assert rows == [{"name": "نماز", "n": 2}]
+
+
+async def test_doctor_reports_missing_config(monkeypatch, capsys):
+    from lifeagent import doctor
+
+    monkeypatch.setattr(doctor, "load_dotenv", lambda: None)
+    monkeypatch.delenv("TELEGRAM_BOT_TOKEN", raising=False)
+    assert await doctor.run(live=False) == 1
+    assert "TELEGRAM_BOT_TOKEN" in capsys.readouterr().out

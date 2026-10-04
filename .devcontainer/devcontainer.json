@@ -1,0 +1,18 @@
+{
+  // GitHub Codespaces / VS Code dev container — for testing the bot without a server.
+  // Add the secrets below under GitHub → Settings → Codespaces → Secrets (grant this repo access),
+  // then in the codespace terminal run:  python -m lifeagent.doctor --live  &&  python -m lifeagent
+  "name": "LifeAgent",
+  "image": "mcr.microsoft.com/devcontainers/python:3.12",
+  "postCreateCommand": "sudo apt-get update && sudo apt-get install -y --no-install-recommends ripgrep libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz-subset0 fonts-dejavu-core && pip install uv -r requirements-dev.txt -r requirements-docs.txt",
+  "secrets": {
+    "TELEGRAM_BOT_TOKEN": {"description": "Token from @BotFather (use a separate test bot)"},
+    "TELEGRAM_ALLOWED_USER_IDS": {"description": "Your numeric Telegram user id"},
+    "ANTHROPIC_API_KEY": {"description": "Key from console.anthropic.com"},
+    "OPENAI_API_KEY": {"description": "Optional: voice messages"},
+    "GITHUB_PERSONAL_ACCESS_TOKEN": {"description": "Optional: GitHub MCP"}
+  },
+  "customizations": {
+    "vscode": {"extensions": ["ms-python.python"]}
+  }
+}

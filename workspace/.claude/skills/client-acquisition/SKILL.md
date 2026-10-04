@@ -1,16 +1,15 @@
 ---
 name: client-acquisition
-description: "Win better-paying freelance clients, especially international USD clients (پیدا کردن مشتری خارجی، پروپوزال، قیمت‌گذاری دلاری): positioning for an AI-agent engineer, LinkedIn/X outreach, discovery calls, proposals and estimates, pricing, case studies, and the realities of platforms like Upwork for someone in Iran. Use when the user wants more/better clients, writes a proposal, prices a project, or asks about Upwork, remote/dollar income."
+description: "Win better-paying freelance clients, especially international USD clients outside freelance platforms (پیدا کردن مشتری خارجی مستقیم، پروپوزال، قیمت‌گذاری دلاری): positioning, LinkedIn/X outreach, discovery calls, proposals and estimates, pricing, case studies. Use when the user wants more/better direct clients, writes a non-Upwork proposal, or prices a project; for Upwork itself use upwork-growth."
 ---
 
 # Client Acquisition — مشتری بهتر و درآمد دلاری
 
-## واقعیت پلتفرم‌ها (صادق باش)
-- Upwork به‌دلیل تحریم‌های آمریکا ثبت‌نام و استفاده از داخل ایران را ممنوع کرده و IP ایران را مسدود می‌کند؛ پرداخت‌ها هم بررسی تحریمی می‌شوند ([Upwork support](https://support.upwork.com/hc/en-us/articles/211067778)). Fiverr و بیشتر پلتفرم‌های آمریکایی هم وضع مشابهی دارند. وضعیت فعلی را هر بار با WebSearch چک کن.
-- **برای دور زدن این محدودیت‌ها کمک نکن** (VPN برای پنهان کردن موقعیت، حساب یا هویت دیگران، اسناد ساختگی). اگر کاربر پرسید، ریسک واقعی را بگو: بسته شدن حساب، بلوکه شدن پول، و مسائل حقوقی — و مسیرهای زیر را پیشنهاد بده.
-- اگر شرایط کاربر عوض شد (اقامت قانونی در کشور دیگر)، بخش «پروفایل پلتفرم» پایین فعال می‌شود.
+## دو کانال
+- **Upwork:** مسیر کامل رشد حساب از صفر تا Top Rated در skill `upwork-growth` است (اگر در پروفایل آمده که کاربر حساب Upwork فعال دارد). دسترسی به حساب و مسائل هویتی/مالی آن با خود کاربر است؛ درباره دور زدن احراز هویت یا تشخیص موقعیت راهنمایی نکن.
+- **مشتری مستقیم خارجی** (پایین): مکمل Upwork و بدون کارمزد پلتفرم؛ برند شخصی در LinkedIn/X به هر دو کمک می‌کند.
 
-## مسیر اصلی: مشتری مستقیم خارجی
+## مشتری مستقیم خارجی
 1. **جایگاه‌یابی (niche):** به‌جای «AI developer» عمومی، یک پیشنهاد مشخص: مثلاً «AI agents آماده production با LangGraph برای اتوماسیون پشتیبانی/پردازش اسناد/ابزارهای داخلی شرکت‌های کوچک». با کاربر ۲-۳ گزینه را بسنج (skill `decision-helper` حالت A).
 2. **اثبات (portfolio):** ۲-۳ case study کوتاه از پروژه‌های واقعی (ناشناس‌شده): مسئله → معماری → نتیجه عددی. یک repo نمایشی تمیز در GitHub با README خوب و دموی کوتاه.
 3. **کانال‌ها:** LinkedIn و X (با skill `personal-brand`)، جامعه‌های تخصصی (Discord/Slack فریم‌ورک‌ها، GitHub issues/PR در پروژه‌های LangChain اکوسیستم)، و معرفی از مشتری‌های راضی.
@@ -30,9 +29,6 @@ description: "Win better-paying freelance clients, especially international USD 
 - داده بازار را با WebSearch (نرخ‌های AI/LLM engineer فریلنس، با تاریخ و منبع) بیاور و بازه بده.
 - پروژه‌های agent را ترجیحاً **fixed با milestone** یا retainer ماهانه قیمت بده، نه ساعتی ارزان. برای اولین مشتری‌های خارجی، تخفیف «case study» محدود و صریح (نه نرخ دائمی پایین).
 - هزینه‌های جاری مشتری (API مدل، hosting، نگهداری) را جدا و شفاف بنویس.
-
-## پروفایل پلتفرم (فقط وقتی کاربر واجد شرایط شد)
-عنوان مشخص با niche، overview با نتیجه‌های عددی، portfolio با case study، چند پروژه کوچک اول برای review، و پروپوزال‌های سفارشی کوتاه برای هر آگهی.
 
 ## پیگیری
 در بازبینی هفتگی: تعداد outreach، پاسخ‌ها، پروپوزال‌ها، نرخ تبدیل، و یک قدم بهبود برای هفته بعد.

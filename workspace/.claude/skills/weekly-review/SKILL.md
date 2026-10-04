@@ -12,7 +12,7 @@ description: Weekly review (بازبینی هفتگی) — what got done, habits
 - ژورنال: `journal_recent` days=7 — روند حال و انرژی، موضوعات تکراری.
 - مالی: `finance_list_transactions` از شنبه تا امروز + `finance_summary` ماه جاری برای وضعیت بودجه.
 - اهداف: `goal_list`.
-- فریلنس: `time_report` هفته، `project_list` (status=all برای تغییرات هفته)، درآمد فریلنس ثبت‌شده؛ تعداد outreach/پروپوزال‌ها (skill `client-acquisition`).
+- فریلنس: `time_report` هفته، `project_list` (status=all برای تغییرات هفته)، درآمد فریلنس ثبت‌شده؛ قیف فروش با `pipeline_stats` (days=7، و جدا source=upwork) — skillهای `upwork-growth` و `client-acquisition`.
 - برند: `notes/brand/log.md` — پست‌های این هفته (skill `personal-brand`).
 - وزن: `health_history` metric=weight days=30 — روند نسبت به هدف (skill `healthy-gain`).
 - تقویم هفته آینده و GitHub (اگر وصل است): رویدادهای مهم، PR/issueهای باز کاربر.

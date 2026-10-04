@@ -121,7 +121,13 @@ CREATE TABLE IF NOT EXISTS projects (
     client_id   INTEGER REFERENCES clients(id),
     title       TEXT NOT NULL,
     status      TEXT NOT NULL DEFAULT 'active'
-                CHECK (status IN ('lead', 'proposal', 'active', 'paused', 'done', 'lost')),
+                CHECK (status IN ('lead', 'proposal', 'interview', 'active', 'paused', 'done', 'lost')),
+    source      TEXT,                       -- upwork / linkedin / x / referral / direct ...
+    url         TEXT,                       -- job post or contract link
+    connects    INTEGER,                    -- Upwork Connects spent on the proposal
+    proposal_sent_at TEXT,                  -- set automatically on status changes
+    interviewed_at   TEXT,
+    hired_at         TEXT,
     billing     TEXT NOT NULL DEFAULT 'hourly' CHECK (billing IN ('hourly', 'fixed')),
     rate        REAL,                       -- hourly rate, or the fixed price
     currency    TEXT NOT NULL DEFAULT 'IRT',
