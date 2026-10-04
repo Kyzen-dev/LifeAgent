@@ -6,7 +6,7 @@ from claude_agent_sdk import create_sdk_mcp_server
 from claude_agent_sdk.types import McpSdkServerConfig
 
 from ..context import ToolContext
-from . import finance, planning, reminders, utility, wellbeing
+from . import finance, planning, reminders, utility, web, wellbeing
 
 SERVER_NAME = "life"
 
@@ -18,5 +18,6 @@ def build_life_server(ctx: ToolContext) -> McpSdkServerConfig:
         *planning.build(ctx),
         *reminders.build(ctx),
         *utility.build(ctx),
+        *web.build(ctx),
     ]
     return create_sdk_mcp_server(name=SERVER_NAME, version="1.0.0", tools=tools)

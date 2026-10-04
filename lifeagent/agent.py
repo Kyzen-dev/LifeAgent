@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import time
 import warnings
 from dataclasses import dataclass, field
 from typing import Any, Awaitable, Callable
@@ -57,6 +58,8 @@ class ChatAgent:
         self.client: ClaudeSDKClient | None = None
         # total_cost_usd in ResultMessage is cumulative for the client's lifetime.
         self._client_cost = 0.0
+        # tool name -> monotonic deadline, from the "allow for N minutes" button
+        self._trusted_until: dict[str, float] = {}
 
     # --- options --------------------------------------------------------
 
@@ -95,8 +98,15 @@ class ChatAgent:
         if decision == "deny":
             return PermissionResultDeny(message="دسترسی به مسیرهای بیرون از workspace مجاز نیست.")
 
+        if self._trusted_until.get(tool_name, 0) > time.monotonic():
+            return PermissionResultAllow(updated_input=tool_input)
+
         title, details = permissions.describe(tool_name, tool_input)
-        if await self.app.approvals.ask(self.chat_id, title, details):
+        trust_minutes = s.trust_window_min if permissions.trustable(tool_name) else None
+        verdict = await self.app.approvals.ask(self.chat_id, title, details, trust_minutes)
+        if verdict == "trust" and trust_minutes:
+            self._trusted_until[tool_name] = time.monotonic() + trust_minutes * 60
+        if verdict in ("once", "trust"):
             return PermissionResultAllow(updated_input=tool_input)
         return PermissionResultDeny(
             message="کاربر این کار را تأیید نکرد. آن را انجام نده؛ اگر لازم است راه دیگری پیشنهاد کن."
@@ -144,6 +154,7 @@ class ChatAgent:
         async with self.lock:
             await self._drop_client()
             await self.app.db.clear_session(self.chat_id)
+            self._trusted_until.clear()
 
     async def close(self) -> None:
         await self._drop_client()

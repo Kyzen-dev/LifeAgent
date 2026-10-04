@@ -32,15 +32,28 @@ async def test_approval_resolves_from_button():
     await asyncio.sleep(0.01)
     data = bot.sent[0].reply_markup.inline_keyboard[0][0].callback_data
     _, approval_id, _ = data.split(":")
-    assert manager.resolve(approval_id, True)
-    assert await task is True
+    assert len(bot.sent[0].reply_markup.inline_keyboard) == 1  # no trust button by default
+    assert manager.resolve(approval_id, "once")
+    assert await task == "once"
     assert "تأیید شد" in bot.sent[0].text
-    assert not manager.resolve(approval_id, True)  # already handled
+    assert not manager.resolve(approval_id, "once")  # already handled
+
+
+async def test_approval_trust_button_and_bad_verdict():
+    bot = FakeBot()
+    manager = ApprovalManager(bot, timeout_s=5)
+    task = asyncio.create_task(manager.ask(42, "Bash", "ls", trust_minutes=30))
+    await asyncio.sleep(0.01)
+    trust_button = bot.sent[0].reply_markup.inline_keyboard[1][0]
+    approval_id = trust_button.callback_data.split(":")[1]
+    assert not manager.resolve(approval_id, "bogus")
+    assert manager.resolve(approval_id, "trust")
+    assert await task == "trust"
 
 
 async def test_approval_times_out_as_deny():
     manager = ApprovalManager(FakeBot(), timeout_s=0.05)
-    assert await manager.ask(42, "x", "y") is False
+    assert await manager.ask(42, "x", "y") == "deny"
 
 
 async def test_reminder_tool_schedules_and_fires(tool_ctx):

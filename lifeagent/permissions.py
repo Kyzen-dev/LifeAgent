@@ -30,6 +30,7 @@ ALLOWED_TOOLS = [
     "ListMcpResourcesTool",
     "ReadMcpResourceTool",
     f"mcp__{SERVER_NAME}",  # local personal-data tools (SQLite) are always allowed
+    "mcp__context7",  # documentation lookup only
 ]
 
 # MCP tool names that only read (Gmail/Calendar/Drive/GitHub naming conventions).
@@ -38,6 +39,13 @@ READ_PREFIXES = (
 )
 
 FILE_TOOLS = {"Write", "Edit", "MultiEdit", "NotebookEdit"}
+
+# Playwright MCP actions that only look at pages; clicking/typing/uploading asks first.
+BROWSER_READ_ACTIONS = {
+    "browser_navigate", "browser_navigate_back", "browser_snapshot", "browser_take_screenshot",
+    "browser_wait_for", "browser_tabs", "browser_console_messages", "browser_network_requests",
+    "browser_resize", "browser_hover", "browser_close",
+}
 
 TOOL_LABELS = {
     "Bash": "اجرای دستور در سرور",
@@ -63,10 +71,22 @@ def classify(tool_name: str, tool_input: dict[str, Any], workspace: Path, auto_b
         return "allow" if auto_bash else "ask"
 
     if tool_name.startswith("mcp__"):
-        _, _, action = tool_name.split("__", 2) if tool_name.count("__") >= 2 else ("", "", "")
+        _, server, action = tool_name.split("__", 2) if tool_name.count("__") >= 2 else ("", "", "")
+        if server == "browser":
+            return "allow" if action in BROWSER_READ_ACTIONS else "ask"
         return "allow" if action.startswith(READ_PREFIXES) else "ask"
 
     return "ask"
+
+
+def trustable(tool_name: str) -> bool:
+    """Whether the approval prompt may offer "allow for N minutes".
+
+    Local actions (shell, workspace files, browser interaction) can be trusted for a
+    while; anything that talks to other people or services (email, calendar, GitHub)
+    is confirmed one call at a time.
+    """
+    return tool_name == "Bash" or tool_name in FILE_TOOLS or tool_name.startswith("mcp__browser__")
 
 
 def describe(tool_name: str, tool_input: dict[str, Any]) -> tuple[str, str]:

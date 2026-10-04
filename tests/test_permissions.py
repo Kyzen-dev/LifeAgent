@@ -19,3 +19,13 @@ def test_policy(tmp_path: Path):
     assert classify("mcp__github__create_pull_request", {}, ws, False) == "ask"
     assert classify("mcp__github__list_pull_requests", {}, ws, False) == "allow"
     assert classify("SomethingNew", {}, ws, False) == "ask"
+    assert classify("mcp__browser__browser_navigate", {}, ws, False) == "allow"
+    assert classify("mcp__browser__browser_click", {}, ws, False) == "ask"
+
+
+def test_trustable():
+    from lifeagent.permissions import trustable
+
+    assert trustable("Bash") and trustable("Write") and trustable("mcp__browser__browser_type")
+    assert not trustable("mcp__google__send_gmail_message")
+    assert not trustable("mcp__github__create_issue")

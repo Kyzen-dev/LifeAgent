@@ -54,7 +54,9 @@ HELP_TEXT = """\
 • «ایمیل‌های مهم امروز چیه؟» / «برنامه این هفته‌ام؟»
 • «PRهای باز ریپوی X رو بررسی کن»
 • «درباره Rust async تحقیق کن و خلاصه‌اش رو برام بنویس»
-• عکس رسید، PDF یا اسکرین‌شات بفرست تا تحلیل/ثبت کنم.
+• «امروز رو تایم‌بلاک کن» / «این ایده رو بکوب» / «بین این دو پیشنهاد کاری کدوم؟»
+• «گزارش هزینه‌ها رو اکسل کن» / «هوای فردا؟» / «قیمت تتر؟» / «این ویدیو یوتیوب رو خلاصه کن»
+• عکس رسید، جواب آزمایش، PDF یا اسکرین‌شات بفرست تا تحلیل/ثبت کنم.
 
 کارهایی که بیرون از سیستم اثر دارند (ارسال ایمیل، تغییر تقویم، GitHub، اجرای دستور)
 فقط با زدن دکمه «✅ تأیید» انجام می‌شوند.
@@ -72,6 +74,11 @@ TOOL_LABELS: list[tuple[str, str]] = [
     ("mcp__life__send_file", "📤 ارسال فایل"),
     ("mcp__google__", "🔵 Google"),
     ("mcp__github__", "🐙 GitHub"),
+    ("mcp__context7__", "📚 مستندات کتابخانه"),
+    ("mcp__browser__", "🧭 مرورگر"),
+    ("mcp__life__weather", "🌤 آب‌وهوا"),
+    ("mcp__life__market", "📈 قیمت‌ها"),
+    ("mcp__life__youtube", "▶️ YouTube"),
     ("WebSearch", "🔎 جستجو در وب"),
     ("WebFetch", "🌐 خواندن صفحه وب"),
     ("Read", "📄 خواندن فایل"),
@@ -313,7 +320,7 @@ async def on_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     parts = (query.data or "").split(":")
 
     if parts[0] == "appr" and len(parts) == 3:
-        found = app.approvals.resolve(parts[1], parts[2] == "y")
+        found = app.approvals.resolve(parts[1], parts[2])
         await query.answer("ثبت شد" if found else "این درخواست منقضی شده است")
         return
 

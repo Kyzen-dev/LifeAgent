@@ -1,4 +1,4 @@
-"""External MCP servers: Google Workspace (Gmail/Calendar/Drive/Tasks) and GitHub."""
+"""External MCP servers wired into the agent, each enabled from .env."""
 
 from __future__ import annotations
 
@@ -33,6 +33,7 @@ def external_mcp_servers(settings: Settings) -> dict[str, dict[str, Any]]:
         }
 
     if settings.github_enabled:
+        # Official GitHub MCP server (remote).
         servers["github"] = {
             "type": "http",
             "url": "https://api.githubcopilot.com/mcp/",
@@ -40,6 +41,26 @@ def external_mcp_servers(settings: Settings) -> dict[str, dict[str, Any]]:
                 "Authorization": f"Bearer {settings.github_token}",
                 "X-MCP-Toolsets": settings.github_toolsets,
             },
+        }
+
+    if settings.context7_enabled:
+        # Up-to-date library/framework documentation (https://github.com/upstash/context7).
+        server: dict[str, Any] = {"type": "http", "url": "https://mcp.context7.com/mcp"}
+        if settings.context7_api_key:
+            server["headers"] = {"Authorization": f"Bearer {settings.context7_api_key}"}
+        servers["context7"] = server
+
+    if settings.browser_enabled:
+        # Headless Chromium for JS-heavy pages (https://github.com/microsoft/playwright-mcp).
+        # Requires the image to be built with INSTALL_BROWSER=true.
+        servers["browser"] = {
+            "type": "stdio",
+            "command": "npx",
+            "args": [
+                "-y", "@playwright/mcp@latest",
+                "--headless", "--isolated", "--no-sandbox",
+                "--executable-path", "/usr/bin/chromium",
+            ],
         }
 
     return servers

@@ -11,6 +11,7 @@ TEMPLATES = Path(__file__).parent / "templates"
 SUBDIRS = (
     "memory", "inbox", "outbox",
     "notes/work", "notes/learning", "notes/people", "notes/research", "notes/reviews", "notes/health",
+    "notes/decisions",
 )
 
 

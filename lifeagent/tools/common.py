@@ -7,6 +7,8 @@ import json
 import logging
 from typing import Any, Awaitable, Callable
 
+import httpx
+
 log = logging.getLogger(__name__)
 
 Handler = Callable[[dict[str, Any]], Awaitable[dict[str, Any]]]
@@ -33,6 +35,9 @@ def safe(fn: Handler) -> Handler:
             return await fn(args)
         except (ValueError, KeyError, TypeError) as exc:
             return err(str(exc))
+        except httpx.HTTPError as exc:
+            log.warning("tool %s: network error: %s", fn.__name__, exc)
+            return err(f"سرویس بیرونی در دسترس نیست ({type(exc).__name__}). بعداً دوباره امتحان کن یا از WebSearch استفاده کن.")
         except Exception as exc:  # noqa: BLE001 - surface anything to the model
             log.exception("tool %s failed", fn.__name__)
             return err(f"{type(exc).__name__}: {exc}")

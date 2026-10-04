@@ -1,6 +1,9 @@
 services:
   lifeagent:
-    build: .
+    build:
+      context: .
+      args:
+        INSTALL_BROWSER: "false"   # "true" + ENABLE_BROWSER=true in .env for the headless browser
     container_name: lifeagent
     restart: unless-stopped
     env_file: .env

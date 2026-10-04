@@ -54,9 +54,15 @@ class Settings:
     google_user_email: str | None
     github_token: str | None
     github_toolsets: str
+    context7_enabled: bool
+    context7_api_key: str | None
+    browser_enabled: bool
+
+    city: str
 
     auto_approve_bash: bool
     approval_timeout_s: int
+    trust_window_min: int
     daily_budget_usd: float | None
 
     @property
@@ -114,7 +120,12 @@ class Settings:
             github_toolsets=_env(
                 "GITHUB_TOOLSETS", "repos,issues,pull_requests,actions,notifications"
             ),
+            context7_enabled=_env_bool("ENABLE_CONTEXT7", True),
+            context7_api_key=_env("CONTEXT7_API_KEY"),
+            browser_enabled=_env_bool("ENABLE_BROWSER", False),
+            city=_env("LIFEAGENT_CITY", "Tehran"),
             auto_approve_bash=_env_bool("AUTO_APPROVE_BASH", False),
             approval_timeout_s=int(_env("APPROVAL_TIMEOUT_SECONDS", "900")),
+            trust_window_min=int(_env("TRUST_WINDOW_MINUTES", "30")),
             daily_budget_usd=_env_float("DAILY_BUDGET_USD"),
         )

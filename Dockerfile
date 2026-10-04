@@ -1,4 +1,8 @@
-FROM python:3.12-slim
+# trixie: provides fonts-vazirmatn (Persian font for PDF/Word/charts)
+FROM python:3.12-slim-trixie
+
+# Set to true to enable the optional headless browser (Playwright MCP): ~400 MB larger image.
+ARG INSTALL_BROWSER=false
 
 ENV PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
@@ -7,15 +11,20 @@ ENV PYTHONUNBUFFERED=1 \
     LIFEAGENT_DATA_DIR=/data \
     LIFEAGENT_WORKSPACE_DIR=/app/workspace
 
-# git/ripgrep help the agent's built-in tools; uv provides `uvx` for the Google Workspace MCP server.
+# git/ripgrep: the agent's built-in tools · pango + fonts: PDF and charts with Persian text
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends git ripgrep ca-certificates curl \
+    && apt-get install -y --no-install-recommends \
+        git ripgrep ca-certificates curl fontconfig \
+        fonts-vazirmatn fonts-dejavu-core libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz-subset0 \
+    && if [ "$INSTALL_BROWSER" = "true" ]; then \
+        apt-get install -y --no-install-recommends nodejs npm chromium; fi \
     && rm -rf /var/lib/apt/lists/* \
-    && pip install uv matplotlib
+    && fc-cache -f
 
 WORKDIR /app
-COPY requirements.txt .
-RUN pip install -r requirements.txt
+COPY requirements.txt requirements-docs.txt ./
+# uv provides `uvx` for the Google Workspace MCP server.
+RUN pip install uv -r requirements.txt -r requirements-docs.txt
 
 COPY lifeagent ./lifeagent
 COPY workspace ./workspace

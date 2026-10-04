@@ -8,19 +8,24 @@
 
 | حوزه | چه کاری می‌کند |
 |---|---|
-| 💼 کار و بهره‌وری | مدیریت کارها و اهداف، خلاصه و مرتب‌سازی ایمیل، پیش‌نویس پاسخ، تقویم و آمادگی جلسه، یادداشت جلسه و action item |
-| 🐙 برنامه‌نویسی | خلاصه PRها/issueها/CI در GitHub، code review با subagent مخصوص، ثبت تصمیم‌های فنی |
+| 💼 کار و بهره‌وری | مدیریت کارها و اهداف، تخلیه ذهن و مرتب‌سازی، تایم‌بلاکینگ و کار عمیق، ایمیل و پیش‌نویس پاسخ، تقویم و آمادگی جلسه |
+| 🐙 برنامه‌نویسی | خلاصه PRها/issueها/CI، code review، دیباگ سیستماتیک، مستندات به‌روز کتابخانه‌ها |
+| 🚀 مسیر شغلی | رزومه متناسب با آگهی، آمادگی مصاحبه، مذاکره حقوق، کار ریموت و مهاجرت کاری |
 | 💰 مالی شخصی | ثبت هزینه/درآمد با یک جمله یا عکس رسید و پیامک بانکی، بودجه ماهانه، گزارش ماه شمسی، چندارزی |
-| 🌱 سلامت و عادت‌ها | پیگیری عادت‌ها و streak، وزن/خواب/ورزش، ژورنال و حال روزانه، مربی سلامت |
-| 📚 یادگیری | برنامه یادگیری، خلاصه کتاب/مقاله، مرور فاصله‌دار و امتحان گرفتن |
-| 🔎 تحقیق | تحقیق عمیق وب با منبع (subagent `researcher`) و ذخیره در پایگاه دانش |
+| 🌱 سلامت و عادت‌ها | پیگیری عادت‌ها و streak، وزن/خواب/ورزش، ژورنال و حال روزانه، تفسیر آزمایش خون، مربی سلامت |
+| 📚 یادگیری | برنامه یادگیری، خواندن عمیق کتاب/مقاله و روش فاینمن، مرور فاصله‌دار و امتحان گرفتن |
+| 🔎 تحقیق | تحقیق عمیق با مثلث‌سازی منابع و نقد مخالف (`deep-research` + subagent `researcher`)، مستندات به‌روز کتابخانه‌ها (Context7) |
+| 🧭 تصمیم‌گیری | سنجیدن ایده با پنل ۵ نفره و حکم GO/RESHAPE/KILL، چارچوب ۱۰/۱۰/۱۰ برای تصمیم‌های سخت (کار، مهاجرت، خرید بزرگ) |
+| 📄 فایل‌ها | ساخت Word، Excel، PowerPoint، PDF و نمودار با فارسی راست‌چین درست |
+| 🌤 داده زنده | آب‌وهوا، قیمت رمزارز و نرخ ارز جهانی، زیرنویس YouTube برای خلاصه/یادگیری |
 | ⏰ فعال (proactive) | گزارش صبحگاهی، چک‌این شبانه، بازبینی هفتگی (جمعه)، گزارش مالی اول هر ماه شمسی، یادآورها |
 | 🎙️ ورودی‌ها | متن، پیام صوتی فارسی، عکس، PDF و هر فایل دیگر |
 | 🧠 حافظه | پروفایل بلندمدت (`memory/profile.md`) + پایگاه دانش Markdown (`notes/`) + ادامه گفتگو بعد از ری‌استارت |
 
 **امنیت:** خواندن آزاد است؛ هر کار با اثر بیرونی (ارسال ایمیل، تغییر تقویم/Drive، نوشتن در GitHub،
-اجرای دستور shell) فقط بعد از زدن دکمه **✅ تأیید** در تلگرام انجام می‌شود. فقط user idهای مجاز
-می‌توانند با ربات حرف بزنند.
+اجرای دستور shell، کلیک/تایپ در مرورگر) فقط بعد از زدن دکمه **✅ تأیید** در تلگرام انجام می‌شود.
+برای کارهای محلی (اجرای Python برای ساخت فایل، ویرایش فایل‌ها، مرورگر) دکمه «تأیید موارد مشابه تا ۳۰ دقیقه»
+هم هست؛ ایمیل و GitHub همیشه تک‌به‌تک تأیید می‌شوند. فقط user idهای مجاز می‌توانند با ربات حرف بزنند.
 
 ## معماری
 
@@ -29,11 +34,13 @@ Telegram ──► lifeagent (python-telegram-bot)
                 │
                 ├─ ChatAgent ──► Claude Agent SDK (ClaudeSDKClient, یک session ماندگار برای هر چت)
                 │                  ├─ System prompt فارسی + workspace/CLAUDE.md + memory/profile.md
-                │                  ├─ Skills:    workspace/.claude/skills/*   (۱۰ مهارت)
+                │                  ├─ Skills:    workspace/.claude/skills/*   (۲۲ مهارت)
                 │                  ├─ Subagents: workspace/.claude/agents/*   (۵ زیرعامل)
-                │                  ├─ MCP «life» (in-process): مالی، عادت، سلامت، ژورنال، کار، هدف، یادآور، ارسال فایل
+                │                  ├─ MCP «life» (in-process): مالی، عادت، سلامت، ژورنال، کار، هدف، یادآور، آب‌وهوا، قیمت‌ها، YouTube، ارسال فایل
                 │                  ├─ MCP «google»: Gmail / Calendar / Drive / Tasks / Docs / Sheets
                 │                  ├─ MCP «github»: سرور رسمی GitHub
+                │                  ├─ MCP «context7»: مستندات به‌روز کتابخانه‌ها
+                │                  ├─ MCP «browser» (اختیاری): مرورگر headless (Playwright)
                 │                  └─ ابزارهای داخلی: WebSearch, WebFetch, Read, Write, Edit, Grep, Bash
                 │
                 ├─ can_use_tool ──► دکمه تأیید/رد در تلگرام برای کارهای با اثر بیرونی
@@ -41,9 +48,21 @@ Telegram ──► lifeagent (python-telegram-bot)
                 └─ SQLite ──► sessionها، هزینه API، داده‌های شخصی
 ```
 
-### Skills (در `workspace/.claude/skills/`)
-`onboarding` · `morning-brief` · `evening-checkin` · `weekly-review` · `finance-report` · `receipt-scan` ·
-`email-triage` · `meeting-prep` · `learning-plan` · `dev-digest`
+### Skills (در `workspace/.claude/skills/`) — ۲۲ مهارت
+
+| گروه | مهارت‌ها |
+|---|---|
+| روال‌ها | `onboarding` · `morning-brief` · `evening-checkin` · `weekly-review` |
+| بهره‌وری | `capture` · `deep-work` · `email-triage` · `meeting-prep` · `office-docs` |
+| مالی | `finance-report` · `receipt-scan` · `market-watch` |
+| رشد و یادگیری | `learning-plan` · `deepread` · `career-coach` |
+| سلامت | `health-report` |
+| تحقیق و تصمیم | `deep-research` · `decision-helper` · `discernment-nudge` |
+| برنامه‌نویسی | `dev-digest` · `systematic-debugging` |
+| خودبهبودی | `skill-creator` (دستیار می‌تواند برای خودش مهارت جدید بسازد) |
+
+هشت مورد از پروژه‌های متن‌باز پیدا شده در [SkillsMP](https://skillsmp.com) آمده‌اند (Anthropic، obra/superpowers،
+alirezarezvani/claude-skills) و با مجوزشان در `workspace/.claude/skills/THIRD_PARTY_NOTICES.md` ثبت شده‌اند.
 
 ### Subagents (در `workspace/.claude/agents/`)
 `researcher` · `code-reviewer` · `finance-analyst` · `health-coach` · `learning-coach`
@@ -52,7 +71,8 @@ Telegram ──► lifeagent (python-telegram-bot)
 `finance_add_transaction` · `finance_list_transactions` · `finance_delete_transaction` · `finance_set_budget` ·
 `finance_summary` · `habit_create` · `habit_archive` · `habit_log` · `habit_status` · `health_log` ·
 `health_history` · `journal_add` · `journal_recent` · `task_add` · `task_list` · `task_update` · `goal_set` ·
-`goal_list` · `reminder_add` · `reminder_list` · `reminder_cancel` · `date_convert` · `send_file`
+`goal_list` · `reminder_add` · `reminder_list` · `reminder_cancel` · `date_convert` · `send_file` ·
+`weather_forecast` · `market_prices` · `youtube_transcript`
 
 ---
 
@@ -102,6 +122,13 @@ docker compose logs -f
 ### ۵. پیام صوتی — اختیاری
 برای تبدیل ویس فارسی به متن، `OPENAI_API_KEY` را تنظیم کن (مدل پیش‌فرض `whisper-1`).
 
+### ۶. ابزارهای دیگر
+- **Context7** (مستندات به‌روز کتابخانه‌ها برای سؤال‌های برنامه‌نویسی): به‌صورت پیش‌فرض روشن است؛ برای سقف
+  بالاتر یک کلید رایگان از [context7.com](https://context7.com) در `CONTEXT7_API_KEY` بگذار.
+- **آب‌وهوا** (Open-Meteo) و **قیمت رمزارز/ارز** (CoinGecko، ECB): بدون کلید کار می‌کنند. شهر پیش‌فرض: `LIFEAGENT_CITY`.
+- **مرورگر headless** (برای سایت‌هایی که بدون JavaScript باز نمی‌شوند): در `docker-compose.yml` مقدار
+  `INSTALL_BROWSER: "true"` و در `.env` مقدار `ENABLE_BROWSER=true` بگذار و `docker compose up -d --build` بزن (حدود ۴۰۰ مگابایت به image اضافه می‌کند).
+
 ---
 
 ## استفاده
@@ -117,6 +144,11 @@ docker compose logs -f
 - «می‌خوام Kubernetes یاد بگیرم، هفته‌ای ۵ ساعت وقت دارم»
 - «درباره بهترین لپ‌تاپ برنامه‌نویسی زیر ۱۵۰۰ دلار تحقیق کن»
 - عکس رسید یا اسکرین‌شات پیامک بانکی → ثبت خودکار هزینه
+- «این همه کار و ایده تو ذهنمه: …» (یا یک ویس طولانی) → مرتب‌سازی و پیشنهاد اقدام
+- «امروز رو برام تایم‌بلاک کن» · «این ایده استارتاپ رو بکوب» · «بین این دو پیشنهاد کاری کدوم؟»
+- «رزومه‌ام رو برای این آگهی تنظیم کن» + لینک آگهی · «جواب آزمایش خونم رو ببین» + عکس
+- «این کتاب PDF رو عمیق بخون و با روش فاینمن ازم امتحان بگیر» · «این ویدیو یوتیوب رو خلاصه کن»
+- «گزارش هزینه‌های این ماه رو اکسل کن» · «قیمت دلار و تتر امروز؟» · «هوای فردا چطوره؟»
 
 دستورها: `/brief` گزارش صبحگاهی · `/review` بازبینی هفتگی · `/new` گفتگوی تازه · `/stop` توقف ·
 `/cost` هزینه API · `/help`
