@@ -6,10 +6,10 @@ Discovered via the SkillsMP index (skillsmp.com), which aggregates public GitHub
 
 | Skill | Source | License | How it is used |
 |---|---|---|---|
-| `skill-creator` | [anthropics/skills](https://github.com/anthropics/skills) `skills/skill-creator` @ 8a1541c | Apache-2.0 | Vendored unchanged |
-| `discernment-nudge` | [anthropics/skills](https://github.com/anthropics/skills) `skills/discernment-nudge` @ 8a1541c | Apache-2.0 | Vendored unchanged |
-| `deepread` | [alirezarezvani/claude-skills](https://github.com/alirezarezvani/claude-skills) `research/deepread` @ 19392f7 | MIT | Vendored + LifeAgent note appended |
-| `systematic-debugging` | [obra/superpowers](https://github.com/obra/superpowers) `skills/systematic-debugging` @ 8ca22db | MIT | Vendored (test fixtures omitted) + LifeAgent note appended |
+| `skill-creator` | [anthropics/skills](https://github.com/anthropics/skills) `skills/skill-creator` @ 8a1541c | Apache-2.0 | Vendored + LifeAgent note appended (modified) |
+| `discernment-nudge` | [anthropics/skills](https://github.com/anthropics/skills) `skills/discernment-nudge` @ 8a1541c | Apache-2.0 | Vendored + LifeAgent note appended (modified) |
+| `deepread` | [alirezarezvani/claude-skills](https://github.com/alirezarezvani/claude-skills) `research/deepread` @ 19392f7 | MIT | Vendored + Persian triggers in description and LifeAgent note appended |
+| `systematic-debugging` | [obra/superpowers](https://github.com/obra/superpowers) `skills/systematic-debugging` @ 8ca22db | MIT | Vendored (test fixtures omitted) + Persian triggers in description and LifeAgent note appended |
 | `capture` | alirezarezvani/claude-skills `productivity/capture` @ 19392f7 | MIT | Adapted (Persian, LifeAgent tools; scripts removed) |
 | `deep-work` | alirezarezvani/claude-skills `productivity/deep-work` @ 19392f7 | MIT | Adapted (calendar/habit tools instead of scripts); references and assets kept |
 | `deep-research` | alirezarezvani/claude-skills `research/deep-research` @ 19392f7 | MIT | Adapted (notes/research layout, researcher subagents) |

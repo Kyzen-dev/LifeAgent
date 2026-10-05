@@ -2,7 +2,7 @@
 
 This reference answers exactly one decision: **when does capture use the full 4-section format vs the compressed format, and what does each look like in practice?**
 
-Pair with `scripts/complexity_estimator.py` for the deterministic recommendation.
+(The upstream `complexity_estimator.py` script is not installed here — apply the Signal table below directly.)
 
 ## The Core Rule
 
@@ -21,7 +21,7 @@ A 30-item dump with natural clusters needs the full 4-section structure to be us
 | ≤5 items but all related to one project | Compressed with single project header |
 | Workspace inaccessible AND ≤5 items | Compressed with no Section 3 (still note "no workspace accessible") |
 
-`complexity_estimator.py` returns `format=full` or `format=compressed` based on item count + clustering signal. Use it as the seed; override with judgment when context warrants.
+Use the table as the seed (item count + clustering signal); override with judgment when context warrants.
 
 ## Format A: Full 4-Section
 
@@ -208,7 +208,7 @@ Notice the workspace connection got folded inline as a parenthetical instead of 
 
 Before delivering output:
 
-- [ ] Run `complexity_estimator.py` (or apply the Signal table above)
+- [ ] Apply the Signal table above
 - [ ] If `format=compressed`, do NOT force the 4-section format
 - [ ] If `format=full`, ensure the clusters are real (3+ items per cluster) — don't invent clusters to fill the format
 - [ ] Either way, Section 4 ("How I can help") MUST have concrete offers with what + where

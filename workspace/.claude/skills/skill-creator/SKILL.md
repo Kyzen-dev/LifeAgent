@@ -483,3 +483,27 @@ Repeating one more time the core loop here for emphasis:
 Please add steps to your TodoList, if you have such a thing, to make sure you don't forget. If you're in Cowork, please specifically put "Create evals JSON and run `eval-viewer/generate_review.py` so human can review test cases" in your TodoList to make sure it happens.
 
 Good luck!
+
+---
+
+## LifeAgent note (added by LifeAgent; not part of the upstream skill)
+
+Here the skill creator runs inside a Persian Telegram bot (Claude Agent SDK). Adapt the workflow above:
+
+- **Where skills live:** `.claude/skills/<name>/SKILL.md` relative to the workspace (the working directory); subagents in
+  `.claude/agents/<name>.md`. Writing under `.claude/` asks the user for approval in Telegram — say exactly what will be
+  written first. A new or renamed skill is picked up in the next session (`/new`). No `.skill` packaging is needed.
+- **House conventions** (look at an existing skill such as `expense-capture` before drafting):
+  description = what it does + when to trigger, with English **and** Persian trigger phrases, under 1000 characters,
+  and not colliding with sibling skills (list them with `Glob .claude/skills/*/SKILL.md`); body in Persian with a
+  numbered workflow using exact tool names (`mcp__life__*`, built-ins, optional `mcp__google__*`/`mcp__github__*` that may
+  be absent); a Telegram output template (simple Markdown, **no tables**, optional final `[[options: a | b]]` line);
+  persistence paths from `CLAUDE.md` (`notes/...`, `outbox/`); about 120 lines, with long material in `references/`.
+- **No personal data in skills:** never write the user's height, weight, names, income or other private facts into a
+  skill — the skill reads them from `memory/profile.md` at runtime.
+- **Testing:** there is no browser. Run test prompts inline (as in the Claude.ai section) or with subagents when the user
+  wants rigor; if you generate the viewer, use `--static outbox/skill-review.html` and deliver it with `send_file`,
+  then collect feedback in chat. Each Bash run needs approval, so batch steps into one script.
+- **Description optimization** (`run_loop.py`, `claude -p`) makes many model calls: run it only if the `claude` CLI is
+  available and the user explicitly accepts the API cost (check the cost preference in the profile).
+- Talk to the user in Persian and keep jargon (eval, assertion, JSON) to a minimum unless they use it first.

@@ -1,6 +1,6 @@
 ---
 name: systematic-debugging
-description: Use when encountering any bug, test failure, or unexpected behavior, before proposing fixes
+description: "Use when encountering any bug, test failure, or unexpected behavior, before proposing fixes (دیباگ، باگ، ارور، خطا، تست fail شد، CI قرمز شد، «چرا کار نمی‌کنه؟», traceback/stack trace, agent یا LangGraph رفتار عجیب دارد)"
 ---
 
 # Systematic Debugging
@@ -284,10 +284,20 @@ These techniques are part of systematic debugging and available in this director
 
 ---
 
-## LifeAgent note (Telegram context)
+## LifeAgent note (Telegram context; added by LifeAgent, not part of upstream)
 
-You usually cannot run the user's code here. Apply the same phases remotely:
-- Ask for the exact error text, stack trace, logs, versions, and the smallest reproduction — one focused request at a time.
-- If the code is on GitHub, read it with the read-only GitHub tools (recent commits, the failing CI log) before hypothesizing.
-- Use the `context7` MCP tools (when available) to check current library documentation instead of relying on memory.
-- Give the user one hypothesis and one minimal experiment per round; record confirmed root causes in `notes/work/` for next time.
+You usually cannot run the user's code here. Apply the same phases remotely, and answer in Persian (code, errors and
+identifiers stay in English; no Markdown tables in Telegram replies — the tables above are for you):
+- Ask for the exact error text, full traceback, logs, versions (`pip freeze` excerpt, Python version) and the smallest
+  reproduction — one focused request at a time. Files the user sends arrive in `inbox/`; read them with Read.
+- If the code is on GitHub, read it with the read-only GitHub tools (`pull_request_read`, `get_file_contents`,
+  `list_commits`, `get_job_logs` for failing CI) before hypothesizing. Never push or comment without the user's approval.
+- Use the `mcp__context7__*` tools (when available) to check current library documentation instead of relying on memory;
+  for errors after an upgrade, check the library's changelog/issues with a web search (WebSearch or the available search tool).
+- LLM/agent bugs (LangGraph/LangChain): ask for the trace or the state before and after the failing node, the exact
+  prompt/tool schema and the model name — the multi-component evidence step above applies node by node. The
+  `agent-architect` skill has the agent-specific checklist.
+- Running code here needs Bash, which asks the user's approval each time; only do it for code that is in the workspace,
+  and say what will run.
+- Give the user one hypothesis and one minimal experiment per round; when a fix is ready, the `code-reviewer` subagent can
+  review it. Record confirmed root causes in `notes/work/` (e.g. `notes/work/YYYY-MM-DD-bug-<slug>.md`) for next time.

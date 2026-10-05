@@ -40,8 +40,8 @@ For each item above: either it has a **time block tomorrow**, a **calendar date*
 
 ## 4. Bank today's evidence
 
-- [ ] Focus sessions logged (`focus_session_logger.py log ...`)
-- [ ] Weekly status glanced at (`focus_session_logger.py status`) — hours vs target, streak intact
+- [ ] Focus sessions logged (`habit_log` on the «کار عمیق» habit, value = minutes; billable work via `timer_stop`/`time_log`)
+- [ ] Weekly status glanced at (`habit_status` days vs target, `time_report` hours) — streak intact
 
 ## 5. Close
 

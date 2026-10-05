@@ -78,6 +78,10 @@ class ModelSpec:
     thinking: bool = False  # send adaptive thinking (Anthropic models that support it)
     effort: bool = False  # send the effort level
     vision: bool = True
+    # Anthropic request features the CLI may use with a non-Anthropic model (its
+    # *_SUPPORTED_CAPABILITIES): effort, thinking, adaptive_thinking, interleaved_thinking,
+    # mid_conversation_system, temperature. Empty = plain Messages API only.
+    capabilities: tuple[str, ...] = ()
 
     @property
     def key(self) -> str:
@@ -175,6 +179,8 @@ class ModelRegistry:
                 log.error("ignoring model entry %s in %s (unknown or missing fields)", entry, path)
                 continue
             entry.setdefault("label", entry["model_id"])
+            if "capabilities" in entry:
+                entry["capabilities"] = tuple(entry["capabilities"])
             spec = ModelSpec(**entry)
             self.specs = [s for s in self.specs if s.alias != spec.alias] + [spec]
 
@@ -260,8 +266,18 @@ class ModelRegistry:
                 "CLAUDE_CODE_SUBAGENT_MODEL": spec.model_id,
                 # Anthropic-only beta headers make most gateways reject the request.
                 "CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS": "1",
+                # Never let an Anthropic login on the host reach a third-party endpoint.
+                "CLAUDE_CODE_OAUTH_TOKEN": "",
             }
         )
+        # Unknown model ids are otherwise treated as current Claude models (effort,
+        # thinking, mid-conversation system messages). Declare what this model supports.
+        # (The bundled CLI 2.1.x still sends output_config.effort and some anthropic-beta
+        # headers to custom endpoints; LiteLLM drops them with drop_params, and the
+        # Anthropic-compatible providers above accept them.)
+        caps = ",".join(spec.capabilities)
+        for tier in ("FABLE", "OPUS", "SONNET", "HAIKU"):
+            env[f"ANTHROPIC_DEFAULT_{tier}_MODEL_SUPPORTED_CAPABILITIES"] = caps
         env.update(dict(provider.extra_env))
         return env
 

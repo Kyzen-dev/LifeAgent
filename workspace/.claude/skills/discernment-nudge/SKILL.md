@@ -207,3 +207,20 @@ warning. Plain text only — no HTML, no headings, no emoji.
 
 Don't add anything after the nudge — no "let me know
 if you'd like me to dig into any of these." The nudge is the closer.
+
+---
+
+## LifeAgent note (added by LifeAgent; not part of the upstream skill)
+
+This bot talks to a Persian-speaking user on Telegram. Apply the rules above with these adaptations:
+
+- **Language:** write the nudge in the user's language. In Persian replies, replace the English lead-in with exactly
+  `چند نکته که ارزش بررسی دوباره دارد:` and write the 2-3 prompts as first-person Persian questions (technical terms
+  may stay in English). Plain `-` bullets, no emoji, nothing after them.
+- **Buttons:** do not turn the prompts into a `[[options: ...]]` quick-reply line; they are too long for buttons and the
+  nudge must stay light. If the reply has to end with an `[[options: ...]]` line (a confirmation or closed question),
+  skip the nudge for that turn.
+- **Skip entirely** in scheduled routine messages (morning brief, check-ins, weekly review, digests) and after skills that
+  already list risks, unknowns and sources in their output (`decision-helper`, `deep-research`, `health-report`) — that
+  counts as "the user asked you to verify".
+- **Once per conversation** means once per chat session (until the user starts a new one with `/new`).
