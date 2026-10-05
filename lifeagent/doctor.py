@@ -1,7 +1,8 @@
-"""Check that a deployment is wired up correctly: `python -m lifeagent.doctor [--live]`.
+"""Check that a deployment is wired up correctly: `python -m lifeagent.doctor [--live] [--model X|all]`.
 
-Without --live nothing is sent to the model. With --live, one tiny agent turn runs
-through the Claude Agent SDK (costs a fraction of a cent) to prove the whole chain.
+Without --live nothing is sent to a model. With --live, one tiny agent turn runs
+through the Claude Agent SDK (costs a fraction of a cent) to prove the whole chain —
+for the default model, a given model alias, or every available model (--model all).
 """
 
 from __future__ import annotations
@@ -33,7 +34,7 @@ async def _get(client: httpx.AsyncClient, url: str, **kwargs) -> httpx.Response:
     return await client.get(url, timeout=15, **kwargs)
 
 
-async def run(live: bool) -> int:
+async def run(live: bool, model_arg: str | None = None) -> int:
     load_dotenv()
     report = Report()
     print("LifeAgent doctor\n")
@@ -46,9 +47,29 @@ async def run(live: bool) -> int:
     except SystemExit as exc:
         report.line(FAIL, "config", str(exc))
         return 1
-    report.line(OK, "config", f"model={settings.model} effort={settings.effort} tz={settings.tz}")
-    if not os.environ.get("ANTHROPIC_API_KEY") and not os.environ.get("CLAUDE_CODE_OAUTH_TOKEN"):
-        report.line(FAIL, "Anthropic credentials", "ANTHROPIC_API_KEY is not set")
+    report.line(OK, "config", f"effort={settings.effort} tz={settings.tz}")
+
+    from .models import ModelRegistry
+
+    models = ModelRegistry.load(settings.llm_env, settings.models_file)
+    available = models.available()
+    if not available:
+        report.line(FAIL, "models", "no provider key set (ANTHROPIC_API_KEY, OPENROUTER_API_KEY, DEEPSEEK_API_KEY, ...)")
+        return 1
+    default = models.pick(settings.model)
+    wanted = models.resolve(settings.model)
+    if wanted is None or wanted.key != default.key:
+        report.line(WARN, "default model", f"LIFEAGENT_MODEL={settings.model} is unavailable; using {default.alias}")
+    report.line(OK, "models", f"default={default.alias} ({models.describe(default)}); available: "
+                + ", ".join(m.alias for m in available))
+    if settings.fallback_model:
+        fallback = models.resolve(settings.fallback_model)
+        if fallback and models.is_available(fallback) and fallback.key != default.key:
+            report.line(OK, "fallback model", models.describe(fallback))
+        else:
+            report.line(WARN, "fallback model", f"{settings.fallback_model} is unknown, unavailable or the default")
+    if settings.models_file.exists():
+        report.line(OK, "custom models", str(settings.models_file))
 
     from .workspace import ensure_workspace, workspace_skills
 
@@ -74,23 +95,47 @@ async def run(live: bool) -> int:
         except httpx.HTTPError as exc:
             report.line(FAIL, "Telegram", f"unreachable: {exc}")
 
-        # --- Anthropic API reachability (credentials are proven by --live) --------
-        try:
-            await client.get("https://api.anthropic.com", timeout=15)
-            report.line(OK, "api.anthropic.com reachable", "run with --live to verify the key end to end")
-        except httpx.HTTPError as exc:
-            report.line(FAIL, "api.anthropic.com", f"unreachable: {exc}")
+        # --- model endpoints (keys are proven by --live) ------------------------------
+        providers = {models.provider(m).name: models.provider(m) for m in available}
+        for provider in providers.values():
+            base = models.base_url(provider) or "https://api.anthropic.com"
+            url = base + "/health/liveliness" if provider.name == "gateway" else base
+            try:
+                r = await client.get(url, timeout=15)
+                status = OK if provider.name != "gateway" or r.status_code == 200 else WARN
+                report.line(status, f"{provider.label} reachable", f"{base} (HTTP {r.status_code})")
+            except httpx.HTTPError as exc:
+                hint = " — is the gateway running? docker compose --profile gateway up -d" if provider.name == "gateway" else ""
+                report.line(FAIL, provider.label, f"unreachable: {exc}{hint}")
 
         # --- optional integrations -------------------------------------------------
-        if settings.openai_api_key:
+        from .voice import speech_config
+
+        stt = speech_config(settings)
+        if stt:
+            models_url = stt.url.rsplit("/audio/", 1)[0] + "/models"
             try:
-                r = await _get(client, "https://api.openai.com/v1/models",
-                               headers={"Authorization": f"Bearer {settings.openai_api_key}"})
-                report.line(OK if r.status_code == 200 else FAIL, "OpenAI (voice)", f"HTTP {r.status_code}")
+                r = await _get(client, models_url, headers={"Authorization": f"Bearer {stt.api_key}"})
+                report.line(OK if r.status_code == 200 else FAIL, f"voice ({stt.provider}, {stt.model})",
+                            f"HTTP {r.status_code}")
             except httpx.HTTPError as exc:
-                report.line(FAIL, "OpenAI (voice)", str(exc))
+                report.line(FAIL, f"voice ({stt.provider})", str(exc))
         else:
-            report.line(WARN, "voice messages", "OPENAI_API_KEY not set — voice disabled")
+            report.line(WARN, "voice messages", "GROQ_API_KEY (free) or OPENAI_API_KEY not set — voice disabled")
+
+        if settings.tavily_api_key:
+            report.line(OK, "web search MCP", "Tavily (key set)")
+        elif any(not models.provider(m).native for m in available):
+            report.line(OK, "web search MCP", "Exa keyless tier for non-Claude models (set TAVILY_API_KEY for more)")
+
+        if settings.iran_prices_key:
+            from .tools.web import fetch_iran_prices
+
+            try:
+                prices = await fetch_iran_prices(settings.iran_prices_key)
+                report.line(OK, "Iran market prices (BrsApi)", ", ".join(f"{k}: {len(v)}" for k, v in prices.items()))
+            except Exception as exc:  # noqa: BLE001
+                report.line(WARN, "Iran market prices (BrsApi)", f"{type(exc).__name__}: {exc}"[:200])
 
         if settings.github_enabled:
             try:
@@ -133,26 +178,39 @@ async def run(live: bool) -> int:
         except Exception as exc:  # noqa: BLE001
             report.line(WARN, "prayer times", f"aladhan.com failed: {exc}")
 
-    # --- live agent turn -----------------------------------------------------------
+    # --- live agent turns -----------------------------------------------------------
     if live:
         from claude_agent_sdk import ClaudeAgentOptions, ResultMessage, query
 
-        options = ClaudeAgentOptions(
-            model=settings.model, max_turns=1, allowed_tools=[], setting_sources=[],
-            cwd=str(settings.workspace_dir),
-        )
-        try:
-            result = None
-            async for message in query(prompt="Reply with exactly: OK", options=options):
-                if isinstance(message, ResultMessage):
-                    result = message
-            if result and not result.is_error:
-                report.line(OK, "Claude Agent SDK (live)",
-                            f"reply={result.result!r} cost=${(result.total_cost_usd or 0):.4f}")
+        if model_arg == "all":
+            targets = available
+        else:
+            target = models.resolve(model_arg) if model_arg else default
+            if target is None or not models.is_available(target):
+                report.line(FAIL, "live test", f"model {model_arg!r} is unknown or has no key")
+                targets = []
             else:
-                report.line(FAIL, "Claude Agent SDK (live)", str(result.errors if result else "no result"))
-        except Exception as exc:  # noqa: BLE001
-            report.line(FAIL, "Claude Agent SDK (live)", f"{type(exc).__name__}: {exc}")
+                targets = [target]
+        for spec in targets:
+            native = models.provider(spec).native
+            options = ClaudeAgentOptions(
+                model=spec.model_id, max_turns=1, allowed_tools=[], setting_sources=[],
+                cwd=str(settings.workspace_dir), env=models.cli_env(spec),
+                thinking={"type": "adaptive"} if spec.thinking else (None if native else {"type": "disabled"}),
+            )
+            name = f"live: {spec.alias} ({models.describe(spec)})"
+            try:
+                result = None
+                async for message in query(prompt="Reply with exactly: OK", options=options):
+                    if isinstance(message, ResultMessage):
+                        result = message
+                if result and not result.is_error:
+                    report.line(OK, name, f"reply={(result.result or '').strip()[:40]!r}")
+                else:
+                    detail = (result.errors or result.result) if result else "no result"
+                    report.line(FAIL, name, str(detail)[:300])
+            except Exception as exc:  # noqa: BLE001
+                report.line(FAIL, name, f"{type(exc).__name__}: {exc}"[:300])
 
     print("\n" + ("Some required checks failed." if report.failed else "All required checks passed."))
     return 1 if report.failed else 0
@@ -161,7 +219,9 @@ async def run(live: bool) -> int:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--live", action="store_true", help="also run one tiny real agent turn")
-    sys.exit(asyncio.run(run(parser.parse_args().live)))
+    parser.add_argument("--model", help="with --live: a model alias to test, or 'all'")
+    args = parser.parse_args()
+    sys.exit(asyncio.run(run(args.live, args.model)))
 
 
 if __name__ == "__main__":

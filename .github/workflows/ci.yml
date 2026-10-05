@@ -22,6 +22,38 @@ jobs:
       - run: python -m pytest -q
       - run: bash -n deploy/setup-server.sh
 
+  gateway:
+    # The optional LiteLLM gateway: the pinned image starts with our config and routes
+    # Anthropic Messages API calls to the provider (here it must fail auth with a fake key).
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Start the gateway
+        run: |
+          image=$(awk '/image: .*litellm/ {print $2}' docker-compose.yml)
+          echo "image=$image"
+          docker run -d --name gw -p 4000:4000 \
+            -e LITELLM_MASTER_KEY=sk-ci-test -e OPENAI_API_KEY=sk-ci-invalid -e GEMINI_API_KEY=ci-invalid \
+            -v "$PWD/deploy/litellm/config.yaml:/app/config.yaml:ro" \
+            "$image" --config /app/config.yaml --port 4000
+          for i in $(seq 90); do curl -sf localhost:4000/health/liveliness && break; sleep 2; done
+          curl -sf localhost:4000/health/liveliness
+      - name: Model names are served and requests reach the provider
+        run: |
+          curl -sf -H "Authorization: Bearer sk-ci-test" localhost:4000/v1/models | tee models.json
+          for m in gpt-6.1-sol gpt-6-luna gemini-3.1-pro-preview gemini-3.8-flash; do grep -q "\"$m\"" models.json; done
+          code=$(curl -s -o out.json -w '%{http_code}' localhost:4000/v1/messages \
+            -H "Authorization: Bearer sk-ci-test" -H 'content-type: application/json' \
+            -d '{"model":"gpt-6-luna","max_tokens":16,"messages":[{"role":"user","content":"hi"}]}')
+          echo "HTTP $code"; cat out.json; echo
+          test "$code" != 200 && grep -qiE 'auth|api.?key|incorrect' out.json
+          # the master key is enforced
+          test "$(curl -s -o /dev/null -w '%{http_code}' localhost:4000/v1/models)" = 401
+      - if: failure()
+        run: docker logs gw 2>&1 | tail -120
+
   docker:
     needs: test
     strategy:

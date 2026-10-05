@@ -66,3 +66,26 @@ def test_check_existing(monkeypatch, capsys):
 def test_token_format():
     assert configure.TOKEN_RE.match("123456789:AAHdqTcvCH1vGWJxfSeofSAs0K5PALDsaw1")
     assert not configure.TOKEN_RE.match("123:short")
+
+
+def test_complete_needs_a_provider_key():
+    base = {"TELEGRAM_BOT_TOKEN": "1:a", "TELEGRAM_ALLOWED_USER_IDS": "1"}
+    assert not configure.is_complete(base)
+    assert configure.is_complete({**base, "OPENROUTER_API_KEY": "sk-or-x"})
+    assert configure.is_complete({**base, "LITELLM_MASTER_KEY": "sk-x"})
+
+
+def test_verify_key_tolerates_unknown_status(monkeypatch, capsys):
+    monkeypatch.setattr(configure, "http_json", lambda *a, **k: (404, {}))
+    assert configure.verify_key("OPENROUTER_API_KEY", "sk-or-x") is True
+    monkeypatch.setattr(configure, "http_json", lambda *a, **k: (401, {}))
+    assert configure.verify_key("DEEPSEEK_API_KEY", "sk-x") is False
+    assert configure.verify_key("ZAI_API_KEY", "x") is True
+    assert "not verified" in capsys.readouterr().out
+
+
+def test_model_step_suggests_cross_provider_fallback(monkeypatch):
+    answers = iter(["", ""])  # accept the suggested default and fallback
+    monkeypatch.setattr("builtins.input", lambda prompt="": next(answers))
+    out = configure.step_models({"ANTHROPIC_API_KEY": "a", "DEEPSEEK_API_KEY": "d"})
+    assert out["LIFEAGENT_MODEL"] == "sonnet" and out["LIFEAGENT_FALLBACK_MODEL"] == "deepseek"

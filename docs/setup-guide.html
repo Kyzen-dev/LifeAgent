@@ -262,7 +262,7 @@ footer { color: var(--muted); font-size: .88rem; padding: 10px 0 40px; text-alig
         <ul>
           <li>یک کامپیوتر (ویندوز، مک یا لینوکس) با اینترنت.</li>
           <li>حساب تلگرام و حساب GitHub.</li>
-          <li>کارت بین‌المللی برای شارژ Anthropic و احراز هویت Oracle.</li>
+          <li>کارت بین‌المللی برای شارژ ارائه‌دهنده مدل (Anthropic، OpenRouter یا DeepSeek) و احراز هویت Oracle.</li>
           <li>دو فایل شخصی که Claude برایت فرستاده: <code class="inl">.env</code> و <code class="inl">profile.md</code>.</li>
         </ul>
         <div class="callout info"><b>چرا سرور خارج از ایران؟</b>
@@ -285,18 +285,22 @@ footer { color: var(--muted); font-size: .88rem; padding: 10px 0 40px; text-alig
         <div class="callout info"><b>چرا دو ربات؟</b>هر توکن فقط در یک جا می‌تواند همزمان روشن باشد. تستی برای Codespaces، اصلی برای سرور.</div>
         <div class="callout ok"><b>✔ نتیجه درست</b>دو توکن داری.</div>
 
-        <h3>۱-۲. کلید Anthropic (مغز ربات)</h3>
+        <h3>۱-۲. کلید مدل هوش مصنوعی (مغز ربات)</h3>
+        <p>حداقل <strong>یک</strong> ارائه‌دهنده لازم است. پیشنهاد: <strong>Anthropic (Claude)</strong> برای کیفیت؛ یا <strong>OpenRouter</strong> (یک کلید برای Claude، GPT، Gemini و ...) یا <strong>DeepSeek</strong> (خیلی ارزان، ولی عکس نمی‌بیند). مقایسه کامل در <code class="inl">docs/MODELS.md</code> ریپو. مراحل Anthropic:</p>
         <ol>
           <li>به <a href="https://console.anthropic.com">console.anthropic.com</a> برو و وارد شو.</li>
           <li><strong>Settings ← Billing:</strong> اعتبار شارژ کن (۱۰ تا ۲۰ دلار برای ماه اول کافی است).</li>
           <li><strong>Settings ← Limits:</strong> یک <strong>سقف خرج ماهانه</strong> بگذار، مثلاً ۳۰ دلار. مهم‌ترین محافظ هزینه همین است.</li>
           <li><strong>API Keys ← Create Key</strong>، نام <code class="inl">lifeagent</code>، و کلید <code class="inl">sk-ant-...</code> را کپی کن. فقط یک بار نشان داده می‌شود.</li>
         </ol>
-        <div class="callout ok"><b>✔ نتیجه درست</b>یک کلید <code class="inl">sk-ant-...</code> و اعتبار مثبت.</div>
+        <div class="callout ok"><b>✔ نتیجه درست</b>یک کلید <code class="inl">sk-ant-...</code> و اعتبار مثبت (یا کلید OpenRouter/DeepSeek با اعتبار).</div>
+        <div class="callout info"><b>پیشنهاد</b>یک ارائه‌دهنده <strong>دوم</strong> هم بگیر و در ویزارد به‌عنوان «Fallback model» بگذار؛ اگر اعتبار یا سرویس اصلی قطع شد، ربات خودکار با آن جواب می‌دهد.</div>
 
         <h3>۱-۳. اختیاری</h3>
         <ul>
-          <li><strong>پیام صوتی:</strong> کلید OpenAI از <a href="https://platform.openai.com/api-keys">platform.openai.com/api-keys</a>. بدون آن هم بقیه چیزها کار می‌کند.</li>
+          <li><strong>پیام صوتی:</strong> کلید رایگان <strong>Groq</strong> از <a href="https://console.groq.com">console.groq.com</a> (یا کلید OpenAI). بدون آن هم بقیه چیزها کار می‌کند.</li>
+          <li><strong>جستجوی وب برای مدل‌های غیر Claude:</strong> کلید رایگان <a href="https://tavily.com">Tavily</a>؛ بدون آن هم Exa رایگان کار می‌کند.</li>
+          <li><strong>قیمت دلار/طلای بازار آزاد:</strong> کلید رایگان <a href="https://brsapi.ir">BrsApi</a>.</li>
         </ul>
 
         <h3>۱-۴. فایل‌های شخصی</h3>
@@ -320,8 +324,11 @@ footer { color: var(--muted); font-size: .88rem; padding: 10px 0 40px; text-alig
           <tr><td><code class="inl">Bot token</code></td><td>توکن <strong>ربات تستی</strong> (Paste: <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>V</kbd> یا راست‌کلیک)</td></tr>
           <tr><td><code class="inl">Detect it automatically?</code></td><td><kbd>Enter</kbd>؛ بعد در تلگرام به <strong>ربات تستی</strong> یک پیام (مثلاً «سلام») بفرست و دوباره <kbd>Enter</kbd></td></tr>
           <tr><td><code class="inl">Use … — id …?</code></td><td><kbd>Enter</kbd> (تأیید)</td></tr>
-          <tr><td><code class="inl">API key</code></td><td>کلید Anthropic</td></tr>
-          <tr><td><code class="inl">OpenAI API key</code></td><td>کلید OpenAI یا فقط <kbd>Enter</kbd></td></tr>
+          <tr><td><code class="inl">Add which provider?</code></td><td><code class="inl">1</code> (Anthropic) ← کلید را paste کن؛ برای ارائه‌دهنده دوم شماره‌اش را بزن؛ در آخر فقط <kbd>Enter</kbd></td></tr>
+          <tr><td><code class="inl">Default model (alias)</code></td><td><kbd>Enter</kbd> (پیشنهاد: <code class="inl">sonnet</code>)</td></tr>
+          <tr><td><code class="inl">Fallback model …</code></td><td><kbd>Enter</kbd> برای پیشنهاد، یا <code class="inl">-</code> برای هیچ</td></tr>
+          <tr><td><code class="inl">GROQ_API_KEY for voice messages</code></td><td>کلید Groq یا فقط <kbd>Enter</kbd></td></tr>
+          <tr><td><code class="inl">TAVILY_API_KEY</code> / <code class="inl">BRSAPI_KEY</code></td><td>کلید یا <kbd>Enter</kbd></td></tr>
           <tr><td><code class="inl">GitHub fine-grained token</code></td><td>فعلاً <kbd>Enter</kbd></td></tr>
           <tr><td><code class="inl">Prayer-time reminders (azan)?</code></td><td><code class="inl">y</code> و <kbd>Enter</kbd></td></tr>
           <tr><td><code class="inl">City</code></td><td><code class="inl">Tehran</code> یا شهر خودت به انگلیسی</td></tr>
@@ -329,7 +336,7 @@ footer { color: var(--muted); font-size: .88rem; padding: 10px 0 40px; text-alig
         <div class="callout ok"><b>✔ نتیجه درست</b><code class="inl">OK saved …/.env</code></div>
         <p>۴. <strong>چک سلامت کامل:</strong></p>
         <div class="code"><pre><code>python -m lifeagent.doctor --live</code></pre></div>
-        <div class="callout ok"><b>✔ نتیجه درست</b>✅ برای config، skills (۳۱)، Telegram و Anthropic، و در آخر <code class="inl">reply='OK'</code> و جمله <code class="inl">All required checks passed.</code> — ⚠️ زرد برای چیزهای اختیاری (GitHub/Google) طبیعی است.</div>
+        <div class="callout ok"><b>✔ نتیجه درست</b>✅ برای config، models، skills (۳۳)، Telegram و reachable بودن ارائه‌دهنده، و در آخر <code class="inl">live: sonnet … reply='OK'</code> و جمله <code class="inl">All required checks passed.</code> — ⚠️ زرد برای چیزهای اختیاری (GitHub/Google) طبیعی است.</div>
         <p>۵. <strong>روشن کردن ربات:</strong></p>
         <div class="code"><pre><code>python -m lifeagent</code></pre></div>
         <div class="callout ok"><b>✔ نتیجه درست</b>در لاگ <code class="inl">LifeAgent is up</code> می‌آید. این ترمینال را باز بگذار و برو سراغ <a href="#s4">بخش ۴</a> با ربات تستی.</div>
@@ -402,7 +409,7 @@ bash deploy/setup-server.sh</code></pre></div>
           <li>image را می‌سازد (بار اول ۵ تا ۱۰ دقیقه) و ربات را روشن می‌کند.</li>
           <li>چک سلامت را اجرا می‌کند.</li>
         </ol>
-        <div class="callout ok"><b>✔ نتیجه درست</b><code class="inl">Done.</code> در آخر، و ✅ برای Telegram و Anthropic.</div>
+        <div class="callout ok"><b>✔ نتیجه درست</b><code class="inl">Done.</code> در آخر، و ✅ برای Telegram و models. اگر کلید OpenAI/Gemini برای gateway داده باشی، کانتینر <code class="inl">lifeagent-litellm</code> هم بالا می‌آید.</div>
         <p>یک چک کامل‌تر (یک درخواست واقعی خیلی کوچک):</p>
         <div class="code"><pre><code>sudo docker compose run --rm lifeagent python -m lifeagent.doctor --live</code></pre></div>
         <p>ربات با <code class="inl">restart: unless-stopped</code> اجرا می‌شود؛ اگر سرور ری‌استارت شود یا ربات crash کند، خودش دوباره بالا می‌آید.</p>
@@ -456,7 +463,9 @@ bash deploy/setup-server.sh</code></pre></div>
         <div class="group">مالی، سلامت، عادت‌ها</div>
         <ul class="checklist">
           <li><input type="checkbox" id="c9"><label for="c9">«۲۵۰ تومن ناهار» → ثبت. «این ماه چقدر خرج کردم؟» → خلاصه.</label></li>
-          <li><input type="checkbox" id="c10"><label for="c10">عکس یک رسید یا پیامک بانکی → استخراج و ثبت.</label></li>
+          <li><input type="checkbox" id="c10"><label for="c10">عکس رسید + «ثبتش کن» → کارت «🧾 ثبت شد» با دکمه «↩️ لغو»؛ دکمه را بزن → «لغو شد».</label></li>
+          <li><input type="checkbox" id="c10b"><label for="c10b">عکس رسید <strong>بدون</strong> توضیح → خلاصه + دکمه «✅ ثبت کن»؛ بعد روی همان عکس ریپلای کن «اینو ثبت کن».</label></li>
+          <li><input type="checkbox" id="c10c"><label for="c10c">پیامک بانکی را کپی یا فوروارد کن → ریال به تومان و ثبت؛ دوباره بفرست → «احتمالاً تکراری».</label></li>
           <li><input type="checkbox" id="c11"><label for="c11">«وزنم ۶۰.۵ شد» → ثبت. «برنامه افزایش وزنم چیه؟» → کالری، پروتئین، تمرین.</label></li>
           <li><input type="checkbox" id="c12"><label for="c12">«امروز ۲۰ دقیقه مدیتیشن کردم» → ثبت عادت.</label></li>
         </ul>
@@ -470,9 +479,10 @@ bash deploy/setup-server.sh</code></pre></div>
         <ul class="checklist">
           <li><input type="checkbox" id="c16"><label for="c16">یک PDF بفرست → خلاصه؛ «خلاصه‌اش رو PDF کن» → دکمه تأیید → PDF فارسی.</label></li>
           <li><input type="checkbox" id="c17"><label for="c17">«هزینه‌های این ماه رو اکسل کن» → فایل xlsx.</label></li>
-          <li><input type="checkbox" id="c18"><label for="c18">ویس فارسی و انگلیسی (اگر کلید OpenAI داری) → متن درست.</label></li>
+          <li><input type="checkbox" id="c18"><label for="c18">ویس فارسی و انگلیسی (اگر کلید Groq یا OpenAI داری) → متن درست.</label></li>
           <li><input type="checkbox" id="c19"><label for="c19">کاری که اجرای دستور لازم دارد → دکمه‌های «تأیید / رد / تأیید موارد مشابه تا ۳۰ دقیقه».</label></li>
-          <li><input type="checkbox" id="c20"><label for="c20"><code class="inl">/cost</code> → هزینه تقریبی امروز.</label></li>
+          <li><input type="checkbox" id="c20"><label for="c20"><code class="inl">/cost</code> → هزینه تقریبی امروز به تفکیک مدل.</label></li>
+          <li><input type="checkbox" id="c20b"><label for="c20b"><code class="inl">/model</code> → فهرست مدل‌ها با دکمه؛ یکی دیگر را امتحان کن و برگرد به <code class="inl">sonnet</code>.</label></li>
         </ul>
         <div class="group">رشد AI</div>
         <ul class="checklist">
@@ -545,12 +555,14 @@ sudo docker compose up -d</code></pre></div>
         <div class="step-head"><span class="num">۸</span><h2>کنترل هزینه</h2></div>
         <div class="table"><table>
           <tr><th>ابزار</th><th>کار</th></tr>
-          <tr><td>سقف ماهانه در کنسول Anthropic</td><td>سقف قطعی خرج</td></tr>
+          <tr><td>سقف ماهانه در کنسول ارائه‌دهنده (Anthropic/OpenRouter)</td><td>سقف قطعی خرج</td></tr>
           <tr><td><code class="inl">/cost</code></td><td>هزینه تقریبی امروز و این ماه</td></tr>
           <tr><td><code class="inl">DAILY_BUDGET_USD</code></td><td>هشدار وقتی خرج روزانه از سقف رد شد</td></tr>
           <tr><td><code class="inl">LIFEAGENT_EFFORT=low</code></td><td>ارزان‌تر و سریع‌تر (کمی کم‌دقت‌تر)</td></tr>
           <tr><td>خالی گذاشتن روال‌ها، مثل <code class="inl">MIDDAY_CHECKIN_TIME=</code></td><td>حذف پیام‌های خودکار غیرضروری</td></tr>
-          <tr><td><code class="inl">LIFEAGENT_MODEL=claude-opus-5-5</code></td><td>بیشترین کیفیت (گران‌تر)</td></tr>
+          <tr><td><code class="inl">/model</code> در تلگرام</td><td>عوض کردن مدل همان لحظه؛ برای کارهای ساده <code class="inl">haiku</code> یا <code class="inl">deepseek</code></td></tr>
+          <tr><td><code class="inl">LIFEAGENT_MODEL=opus</code></td><td>بیشترین کیفیت (گران‌تر)</td></tr>
+          <tr><td><code class="inl">LIFEAGENT_FALLBACK_MODEL</code></td><td>مدل پشتیبان وقتی ارائه‌دهنده اصلی قطع یا بی‌اعتبار شد</td></tr>
         </table></div>
         <p>بعد از هر تغییر در <code class="inl">.env</code>: <code class="inl">sudo docker compose up -d</code></p>
       </section>
@@ -567,11 +579,12 @@ sudo docker compose up -d</code></pre></div>
           <tr><td><code class="inl">Out of capacity</code></td><td>ظرفیت ARM پر است</td><td>Availability Domain دیگر یا چند ساعت بعد</td></tr>
           <tr><td><code class="inl">permission denied</code> روی <code class="inl">data/</code></td><td>مالکیت فایل‌ها</td><td><code class="inl">sudo chown -R $(id -u):$(id -g) data workspace</code> و بعد <code class="inl">sudo docker compose up -d</code></td></tr>
           <tr><td>build روی سرور کوچک kill شد</td><td>کمبود رم</td><td><code class="inl">free -h</code> (باید swap باشد)؛ اسکریپت را دوباره اجرا کن</td></tr>
-          <tr><td>doctor: <code class="inl">Anthropic: HTTP 401</code></td><td>کلید اشتباه</td><td><code class="inl">python3 deploy/configure.py</code></td></tr>
-          <tr><td>خطای <code class="inl">credit balance</code></td><td>اعتبار تمام شده</td><td>شارژ در Billing کنسول Anthropic</td></tr>
+          <tr><td>doctor: <code class="inl">key rejected</code> یا live با <code class="inl">401</code></td><td>کلید اشتباه</td><td><code class="inl">python3 deploy/configure.py</code></td></tr>
+          <tr><td>«اعتبار حساب این مدل تمام شده»</td><td>اعتبار تمام شده</td><td>شارژ Billing؛ تا آن موقع <code class="inl">/model</code> یا مدل پشتیبان</td></tr>
+          <tr><td><code class="inl">LiteLLM gateway: unreachable</code></td><td>کانتینر gateway بالا نیست</td><td><code class="inl">COMPOSE_PROFILES=gateway</code> در <code class="inl">.env</code> و <code class="inl">sudo docker compose up -d</code></td></tr>
           <tr><td>ربات جواب می‌دهد ولی «خطا: …»</td><td>خطای داخلی</td><td><code class="inl">sudo docker compose logs --tail 200</code> را برای Claude بفرست</td></tr>
           <tr><td>یادآور اذان نمی‌آید</td><td>خاموش است یا API در دسترس نیست</td><td><code class="inl">PRAYER_REMINDERS=true</code> در <code class="inl">.env</code>؛ ربات هر ۳۰ دقیقه دوباره تلاش می‌کند</td></tr>
-          <tr><td>ویس کار نمی‌کند</td><td>کلید OpenAI ندارد یا اشتباه است</td><td><code class="inl">python3 deploy/configure.py</code></td></tr>
+          <tr><td>ویس کار نمی‌کند</td><td>کلید Groq/OpenAI ندارد یا اشتباه است</td><td><code class="inl">python3 deploy/configure.py</code></td></tr>
         </table></div>
 
         <h3>پیوست: تنظیمات مهم <code class="inl">.env</code></h3>
@@ -579,8 +592,8 @@ sudo docker compose up -d</code></pre></div>
           <tr><th>متغیر</th><th>پیش‌فرض</th><th>توضیح</th></tr>
           <tr><td><code class="inl">TELEGRAM_BOT_TOKEN</code></td><td>—</td><td>توکن ربات (الزامی)</td></tr>
           <tr><td><code class="inl">TELEGRAM_ALLOWED_USER_IDS</code></td><td>—</td><td>شناسه‌های مجاز، با کاما (الزامی)</td></tr>
-          <tr><td><code class="inl">ANTHROPIC_API_KEY</code></td><td>—</td><td>کلید Anthropic (الزامی)</td></tr>
-          <tr><td><code class="inl">LIFEAGENT_MODEL</code></td><td><code class="inl">claude-sonnet-5-5</code></td><td>مدل</td></tr>
+          <tr><td><code class="inl">ANTHROPIC_API_KEY</code> / <code class="inl">OPENROUTER_API_KEY</code> / <code class="inl">DEEPSEEK_API_KEY</code> / …</td><td>—</td><td>کلید ارائه‌دهنده مدل (حداقل یکی الزامی)</td></tr>
+          <tr><td><code class="inl">LIFEAGENT_MODEL</code> / <code class="inl">LIFEAGENT_FALLBACK_MODEL</code></td><td><code class="inl">sonnet</code> / —</td><td>مدل پیش‌فرض و پشتیبان</td></tr>
           <tr><td><code class="inl">LIFEAGENT_EFFORT</code></td><td><code class="inl">medium</code></td><td>عمق فکر: low / medium / high</td></tr>
           <tr><td><code class="inl">MORNING_BRIEF_TIME</code></td><td><code class="inl">08:00</code></td><td>گزارش صبح (خالی = خاموش)</td></tr>
           <tr><td><code class="inl">MIDDAY_CHECKIN_TIME</code></td><td><code class="inl">14:00</code></td><td>پیگیری ظهر</td></tr>
@@ -589,7 +602,8 @@ sudo docker compose up -d</code></pre></div>
           <tr><td><code class="inl">AI_DIGEST</code></td><td><code class="inl">thu 10:00</code></td><td>خلاصه اخبار AI</td></tr>
           <tr><td><code class="inl">PRAYER_REMINDERS</code></td><td><code class="inl">false</code></td><td>یادآور اذان</td></tr>
           <tr><td><code class="inl">PRAYER_CITY</code> / <code class="inl">PRAYER_TIMES</code></td><td><code class="inl">Tehran</code> / <code class="inl">fajr,dhuhr,maghrib</code></td><td>شهر و وقت‌های یادآور</td></tr>
-          <tr><td><code class="inl">OPENAI_API_KEY</code></td><td>—</td><td>پیام صوتی</td></tr>
+          <tr><td><code class="inl">GROQ_API_KEY</code> / <code class="inl">OPENAI_API_KEY</code></td><td>—</td><td>پیام صوتی (Groq رایگان اولویت دارد)</td></tr>
+          <tr><td><code class="inl">TAVILY_API_KEY</code> / <code class="inl">BRSAPI_KEY</code></td><td>—</td><td>جستجو برای مدل‌های غیر Claude / قیمت بازار آزاد</td></tr>
           <tr><td><code class="inl">GITHUB_PERSONAL_ACCESS_TOKEN</code></td><td>—</td><td>اتصال GitHub</td></tr>
           <tr><td><code class="inl">DAILY_BUDGET_USD</code></td><td>—</td><td>هشدار هزینه روزانه</td></tr>
           <tr><td><code class="inl">TRUST_WINDOW_MINUTES</code></td><td><code class="inl">30</code></td><td>مدت «تأیید موارد مشابه»</td></tr>

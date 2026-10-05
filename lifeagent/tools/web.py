@@ -55,6 +55,27 @@ async def fetch_prayer_times(day: date, city: str, country: str, method: int) ->
     }
 
 
+IRAN_PRICES_URL = "https://Api.BrsApi.ir/Market/Gold_Currency.php"
+IRAN_PRICE_FIELDS = ("name", "symbol", "price", "unit", "change_percent", "date", "time")
+
+
+async def fetch_iran_prices(key: str) -> dict[str, list[dict[str, Any]]]:
+    """Free-market Toman prices (currency, gold/coin, crypto) from BrsApi.ir (free key)."""
+    data = await _get_json(IRAN_PRICES_URL, {"key": key})
+    out: dict[str, list[dict[str, Any]]] = {}
+    for section in ("currency", "gold", "cryptocurrency"):
+        items = data.get(section) if isinstance(data, dict) else None
+        if isinstance(items, list):
+            out[section] = [
+                {k: item[k] for k in IRAN_PRICE_FIELDS if item.get(k) not in (None, "")}
+                for item in items
+                if isinstance(item, dict)
+            ]
+    if not out:
+        raise ValueError("پاسخ سرویس قیمت قابل فهم نبود؛ از جستجوی وب استفاده کن و منبع و زمان را بگو")
+    return out
+
+
 def build(ctx: ToolContext) -> list:
     @tool(
         "weather_forecast",
@@ -117,7 +138,7 @@ def build(ctx: ToolContext) -> list:
     @tool(
         "market_prices",
         "قیمت لحظه‌ای رمزارزها (CoinGecko) به دلار و نرخ رسمی ارزهای جهانی (ECB). "
-        "نرخ دلار/طلا/سکه بازار آزاد ایران را ندارد؛ برای آن از WebSearch استفاده کن.",
+        "نرخ دلار/طلا/سکه بازار آزاد ایران را ندارد؛ برای آن iran_market_prices (اگر هست) یا جستجوی وب.",
         schema(
             {
                 "crypto": {"type": "string", "description": "شناسه‌های CoinGecko با کاما، مثل bitcoin,ethereum,tether,the-open-network"},
@@ -200,4 +221,25 @@ def build(ctx: ToolContext) -> list:
             }
         )
 
-    return [weather_forecast, market_prices, youtube_transcript, prayer_times]
+    @tool(
+        "iran_market_prices",
+        "قیمت لحظه‌ای بازار آزاد ایران: دلار، یورو و ارزهای دیگر، طلا و سکه، و رمزارزها به تومان/ریال "
+        "(BrsApi.ir). واحد هر قیمت را از فیلد unit بخوان و زمان قیمت را هم بگو.",
+        schema({"filter": {"type": "string", "description": "اختیاری: بخشی از نام یا نماد با کاما، مثل دلار,یورو,سکه,USD"}}),
+    )
+    @safe
+    async def iran_market_prices(args: dict[str, Any]) -> dict[str, Any]:
+        prices = await fetch_iran_prices(ctx.settings.iran_prices_key or "")
+        terms = [t.strip().lower() for t in (args.get("filter") or "").split(",") if t.strip()]
+        if terms:
+            prices = {
+                section: [i for i in items
+                          if any(t in f"{i.get('name', '')} {i.get('symbol', '')}".lower() for t in terms)]
+                for section, items in prices.items()
+            }
+        return ok(prices)
+
+    tools = [weather_forecast, market_prices, youtube_transcript, prayer_times]
+    if ctx.settings.iran_prices_key:
+        tools.append(iran_market_prices)
+    return tools

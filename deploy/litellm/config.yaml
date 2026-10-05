@@ -1,0 +1,47 @@
+# LiteLLM gateway: lets LifeAgent use OpenAI and Gemini models with your own keys.
+# It translates the Anthropic Messages API (what the Claude Agent SDK speaks) into each
+# provider's API. Started by docker compose when .env has COMPOSE_PROFILES=gateway
+# (deploy/configure.py sets it when you enter an OpenAI or Gemini key).
+#
+# Each model_name must equal the model_id of a "gateway" model in lifeagent/models.py,
+# or of a model you add in data/models.toml.  drop_params removes Anthropic-only request
+# fields that other providers would reject.
+# Docs: https://docs.litellm.ai/docs/tutorials/claude_non_anthropic_models
+
+model_list:
+  # OpenAI (OPENAI_API_KEY)
+  - model_name: gpt-6.1-sol
+    litellm_params:
+      model: openai/gpt-6.1-sol
+      api_key: os.environ/OPENAI_API_KEY
+      drop_params: true
+  - model_name: gpt-6-luna
+    litellm_params:
+      model: openai/gpt-6-luna
+      api_key: os.environ/OPENAI_API_KEY
+      drop_params: true
+
+  # Google Gemini (GEMINI_API_KEY from aistudio.google.com)
+  - model_name: gemini-3.1-pro-preview
+    litellm_params:
+      model: gemini/gemini-3.1-pro-preview
+      api_key: os.environ/GEMINI_API_KEY
+      drop_params: true
+  - model_name: gemini-3.8-flash
+    litellm_params:
+      model: gemini/gemini-3.8-flash
+      api_key: os.environ/GEMINI_API_KEY
+      drop_params: true
+
+  # Local models with Ollama on the host (example; also add a matching entry to data/models.toml):
+  # - model_name: qwen3
+  #   litellm_params:
+  #     model: ollama_chat/qwen3:14b
+  #     api_base: http://host.docker.internal:11434
+  #     drop_params: true
+
+litellm_settings:
+  drop_params: true
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY

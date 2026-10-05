@@ -84,3 +84,28 @@ def split_markdown(text: str, limit: int = CHUNK_LIMIT) -> list[str]:
     if current and any(line.strip() for line in current):
         chunks.append("\n".join(current))
     return chunks or [""]
+
+
+_FA_DIGITS = str.maketrans("0123456789", "۰۱۲۳۴۵۶۷۸۹")
+
+
+def fa_number(value: float) -> str:
+    """1250000 -> '۱٬۲۵۰٬۰۰۰'; keeps up to two decimals for non-integers (12.5 -> '۱۲٫۵')."""
+    text = f"{value:,.0f}" if float(value).is_integer() else f"{value:,.2f}".rstrip("0").rstrip(".")
+    return text.replace(",", "٬").replace(".", "٫").translate(_FA_DIGITS)
+
+
+# The model may end a reply with  [[options: A | B | C]]  to offer quick-reply buttons.
+_OPTIONS_RE = re.compile(r"\n?[ \t]*\[\[\s*(?:options|گزینه‌ها|گزینه ها)\s*:\s*(.+?)\]\]\s*$", re.S | re.I)
+MAX_OPTIONS = 4
+MAX_OPTION_LEN = 48
+
+
+def extract_options(text: str) -> tuple[str, list[str]]:
+    """Split a trailing quick-reply marker off a reply: (text without it, [options])."""
+    match = _OPTIONS_RE.search(text)
+    if not match:
+        return text, []
+    options = [o.strip() for o in match.group(1).split("|") if o.strip()]
+    options = [o[:MAX_OPTION_LEN] for o in options][:MAX_OPTIONS]
+    return text[: match.start()].rstrip(), options

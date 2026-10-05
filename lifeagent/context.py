@@ -14,6 +14,7 @@ if TYPE_CHECKING:
 
     from .agent import AgentPool
     from .approvals import ApprovalManager
+    from .models import ModelRegistry
     from .scheduler import Scheduler
 
 
@@ -25,10 +26,18 @@ class AppContext:
     approvals: "ApprovalManager | None" = None
     scheduler: "Scheduler | None" = None
     agents: "AgentPool | None" = None
+    models: "ModelRegistry | None" = None
     extra: dict[str, Any] = field(default_factory=dict)
 
     def now(self) -> datetime:
         return datetime.now(self.settings.tz)
+
+    def add_note(self, chat_id: int, text: str) -> None:
+        """Queue a system note (e.g. "the user undid transaction #12") for the chat's next turn."""
+        self.extra.setdefault("notes", {}).setdefault(chat_id, []).append(text)
+
+    def pop_notes(self, chat_id: int) -> list[str]:
+        return self.extra.get("notes", {}).pop(chat_id, [])
 
 
 @dataclass

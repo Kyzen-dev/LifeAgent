@@ -7,7 +7,16 @@ from typing import Any
 from .config import Settings
 
 
-def external_mcp_servers(settings: Settings) -> dict[str, dict[str, Any]]:
+# Web search servers. Their tools only read, so they run without approval.
+SEARCH_SERVERS = ("tavily", "exa")
+
+
+def external_mcp_servers(settings: Settings, native_model: bool = True) -> dict[str, dict[str, Any]]:
+    """MCP servers for one agent session.
+
+    native_model=False (a non-Anthropic model) has no built-in WebSearch, so a search
+    server is always added: Tavily with TAVILY_API_KEY, otherwise Exa's keyless tier.
+    """
     servers: dict[str, dict[str, Any]] = {}
 
     if settings.google_enabled:
@@ -49,6 +58,17 @@ def external_mcp_servers(settings: Settings) -> dict[str, dict[str, Any]]:
         if settings.context7_api_key:
             server["headers"] = {"Authorization": f"Bearer {settings.context7_api_key}"}
         servers["context7"] = server
+
+    if settings.tavily_api_key:
+        # https://docs.tavily.com/documentation/mcp — search, extract, crawl (free: 1,000 credits/month)
+        servers["tavily"] = {
+            "type": "http",
+            "url": "https://mcp.tavily.com/mcp/",
+            "headers": {"Authorization": f"Bearer {settings.tavily_api_key}"},
+        }
+    elif not native_model:
+        # https://exa.ai/docs/reference/exa-mcp — works without a key (rate-limited free tier)
+        servers["exa"] = {"type": "http", "url": "https://mcp.exa.ai/mcp"}
 
     if settings.browser_enabled:
         # Headless Chromium for JS-heavy pages (https://github.com/microsoft/playwright-mcp).

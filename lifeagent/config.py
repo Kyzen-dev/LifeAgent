@@ -3,9 +3,15 @@
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from zoneinfo import ZoneInfo
+
+# .env variables the model registry reads (provider keys and endpoint overrides).
+LLM_ENV_KEYS = (
+    "ANTHROPIC_API_KEY", "OPENROUTER_API_KEY", "DEEPSEEK_API_KEY", "MOONSHOT_API_KEY", "ZAI_API_KEY",
+    "LITELLM_MASTER_KEY", "LITELLM_URL", "CUSTOM_LLM_API_KEY", "CUSTOM_LLM_BASE_URL",
+)
 
 
 def _env(name: str, default: str | None = None) -> str | None:
@@ -34,6 +40,7 @@ class Settings:
     owner_chat_id: int
 
     model: str
+    fallback_model: str | None
     effort: str
     max_turns: int
 
@@ -55,7 +62,9 @@ class Settings:
     prayer_names: tuple[str, ...]
 
     openai_api_key: str | None
-    transcribe_model: str
+    groq_api_key: str | None
+    transcribe_provider: str
+    transcribe_model: str | None
     transcribe_language: str | None
 
     google_client_id: str | None
@@ -66,13 +75,18 @@ class Settings:
     context7_enabled: bool
     context7_api_key: str | None
     browser_enabled: bool
+    tavily_api_key: str | None
+    iran_prices_key: str | None
 
     city: str
+    finance_cards: bool
 
     auto_approve_bash: bool
     approval_timeout_s: int
     trust_window_min: int
     daily_budget_usd: float | None
+
+    llm_env: dict[str, str] = field(default_factory=dict)
 
     @property
     def google_enabled(self) -> bool:
@@ -85,6 +99,10 @@ class Settings:
     @property
     def db_path(self) -> Path:
         return self.data_dir / "lifeagent.sqlite3"
+
+    @property
+    def models_file(self) -> Path:
+        return self.data_dir / "models.toml"
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -110,7 +128,8 @@ class Settings:
             allowed_user_ids=frozenset(user_ids),
             # Scheduled briefs go to the first listed user's private chat.
             owner_chat_id=user_ids[0],
-            model=_env("LIFEAGENT_MODEL", "claude-sonnet-5-5"),
+            model=_env("LIFEAGENT_MODEL", "sonnet"),
+            fallback_model=_env("LIFEAGENT_FALLBACK_MODEL"),
             effort=_env("LIFEAGENT_EFFORT", "medium"),
             max_turns=int(_env("LIFEAGENT_MAX_TURNS", "40")),
             tz=ZoneInfo(_env("LIFEAGENT_TIMEZONE", "Asia/Tehran")),
@@ -131,7 +150,9 @@ class Settings:
                 x.strip().lower() for x in _env("PRAYER_TIMES", "fajr,dhuhr,maghrib").split(",") if x.strip()
             ),
             openai_api_key=_env("OPENAI_API_KEY"),
-            transcribe_model=_env("TRANSCRIBE_MODEL", "whisper-1"),
+            groq_api_key=_env("GROQ_API_KEY"),
+            transcribe_provider=(_env("TRANSCRIBE_PROVIDER", "auto") or "auto").lower(),
+            transcribe_model=_env("TRANSCRIBE_MODEL"),
             transcribe_language=_env("TRANSCRIBE_LANGUAGE"),
             google_client_id=_env("GOOGLE_OAUTH_CLIENT_ID"),
             google_client_secret=_env("GOOGLE_OAUTH_CLIENT_SECRET"),
@@ -143,9 +164,13 @@ class Settings:
             context7_enabled=_env_bool("ENABLE_CONTEXT7", True),
             context7_api_key=_env("CONTEXT7_API_KEY"),
             browser_enabled=_env_bool("ENABLE_BROWSER", False),
+            tavily_api_key=_env("TAVILY_API_KEY"),
+            iran_prices_key=_env("BRSAPI_KEY"),
             city=_env("LIFEAGENT_CITY", "Tehran"),
+            finance_cards=_env_bool("FINANCE_CONFIRM_CARDS", True),
             auto_approve_bash=_env_bool("AUTO_APPROVE_BASH", False),
             approval_timeout_s=int(_env("APPROVAL_TIMEOUT_SECONDS", "900")),
             trust_window_min=int(_env("TRUST_WINDOW_MINUTES", "30")),
             daily_budget_usd=_env_float("DAILY_BUDGET_USD"),
+            llm_env={k: v for k in LLM_ENV_KEYS if (v := _env(k))},
         )

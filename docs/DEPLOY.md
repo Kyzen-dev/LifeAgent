@@ -31,16 +31,24 @@
 **✔ نتیجه درست:** دو توکن داری.
 > چرا دو ربات؟ هر توکن فقط در **یک** جا می‌تواند همزمان روشن باشد. تستی برای Codespaces، اصلی برای سرور.
 
-### ۱-۲. کلید Anthropic (مغز ربات)
+### ۱-۲. کلید مدل هوش مصنوعی (مغز ربات)
+حداقل **یک** ارائه‌دهنده لازم است. پیشنهاد: **Anthropic (Claude)** برای کیفیت؛ اگر شارژ Anthropic برایت سخت است،
+**OpenRouter** (یک کلید برای Claude، GPT، Gemini و ...) یا **DeepSeek** (خیلی ارزان، ولی عکس نمی‌بیند).
+مقایسه کامل و روش هر کدام: [MODELS.md](MODELS.md). مراحل Anthropic:
 1. به [console.anthropic.com](https://console.anthropic.com) برو و وارد شو.
 2. **Settings → Billing:** اعتبار شارژ کن (۱۰ تا ۲۰ دلار برای ماه اول کافی است؛ مدل پیش‌فرض اقتصادی است).
 3. **Settings → Limits:** یک **سقف خرج ماهانه** بگذار، مثلاً ۳۰ دلار. این مهم‌ترین محافظ هزینه است.
 4. **API Keys → Create Key** → نامش را `lifeagent` بگذار → کلید (`sk-ant-...`) را کپی کن. فقط یک بار نشان داده می‌شود.
 
-**✔ نتیجه درست:** یک کلید `sk-ant-...` و اعتبار مثبت.
+**✔ نتیجه درست:** یک کلید `sk-ant-...` و اعتبار مثبت (یا کلید OpenRouter/DeepSeek با اعتبار).
+> پیشنهاد: یک ارائه‌دهنده **دوم** هم بگیر (مثلاً OpenRouter یا DeepSeek) و در ویزارد به‌عنوان «Fallback model» بگذار؛
+> اگر اعتبار یا سرویس اصلی قطع شد، ربات خودکار با آن جواب می‌دهد.
 
 ### ۱-۳. اختیاری
-- **ویس:** کلید OpenAI از [platform.openai.com/api-keys](https://platform.openai.com/api-keys) (هزینه تبدیل گفتار به متن بسیار کم است). بدون آن، بقیه چیزها کار می‌کند.
+- **ویس:** کلید رایگان **Groq** از [console.groq.com](https://console.groq.com) (Whisper large-v3-turbo؛ لایه رایگان دارد)
+  یا کلید OpenAI. بدون آن، بقیه چیزها کار می‌کند.
+- **جستجوی وب برای مدل‌های غیر Claude:** کلید رایگان [Tavily](https://tavily.com) (۱٬۰۰۰ جستجو در ماه). بدون آن هم Exa رایگان کار می‌کند.
+- **قیمت دلار/طلای بازار آزاد:** کلید رایگان [BrsApi](https://brsapi.ir) (`BRSAPI_KEY`).
 - **GitHub:** حساب GitHub برای Codespaces لازم است (همانی که ریپو دارد).
 
 ### ۱-۴. فایل‌های شخصی
@@ -69,8 +77,11 @@ Codespaces یک کامپیوتر ابری موقت است که GitHub رایگا
    | `Bot token` | توکن **ربات تستی** را paste کن (در ترمینال مرورگر: Ctrl+Shift+V یا راست‌کلیک → Paste) |
    | `Detect it automatically?` | Enter بزن؛ بعد در تلگرام به **ربات تستی** یک پیام (مثلاً «سلام») بفرست و دوباره Enter |
    | `Use <نام تو> — id ...?` | Enter (تأیید) |
-   | `API key` | کلید Anthropic |
-   | `OpenAI API key` | کلید OpenAI یا فقط Enter برای رد کردن |
+   | `Add which provider?` | `1` (Anthropic) → کلید را paste کن؛ برای ارائه‌دهنده دوم شماره‌اش را بزن؛ در آخر فقط Enter |
+   | `Default model (alias)` | Enter (پیشنهاد: `sonnet`) |
+   | `Fallback model ...` | Enter برای پیشنهاد، یا `-` برای هیچ |
+   | `GROQ_API_KEY for voice messages` | کلید Groq یا Enter برای رد کردن |
+   | `TAVILY_API_KEY` / `BRSAPI_KEY` | کلید یا Enter |
    | `GitHub fine-grained token` | فعلاً Enter |
    | `Prayer-time reminders (azan)?` | `y` و Enter |
    | `City` | `Tehran` (یا شهر خودت به انگلیسی) |
@@ -81,8 +92,9 @@ Codespaces یک کامپیوتر ابری موقت است که GitHub رایگا
    ```bash
    python -m lifeagent.doctor --live
    ```
-   **✔ نتیجه درست:** خط‌های ✅ برای config، skills (۳۱)، Telegram، Anthropic، و در آخر
-   `Claude Agent SDK (live) — reply='OK'` و جمله `All required checks passed.`
+   **✔ نتیجه درست:** خط‌های ✅ برای config، models، skills (۳۳)، Telegram، `Anthropic reachable`، و در آخر
+   `live: sonnet (Claude Sonnet 5.5) — reply='OK'` و جمله `All required checks passed.`
+   (برای آزمایش همه مدل‌هایی که کلیدشان را داری: `--live --model all`.)
    (⚠️ زرد برای چیزهای اختیاری مثل GitHub/Google طبیعی است.)
 5. **روشن کردن ربات:**
    ```bash
@@ -164,7 +176,8 @@ bash deploy/setup-server.sh
 4. image را می‌سازد (بار اول ۵ تا ۱۰ دقیقه) و ربات را روشن می‌کند.
 5. در آخر چک سلامت را اجرا می‌کند.
 
-**✔ نتیجه درست:** `Done.` در آخر و ✅ برای Telegram و Anthropic در خروجی doctor.
+**✔ نتیجه درست:** `Done.` در آخر و ✅ برای Telegram و models (و reachable بودن ارائه‌دهنده‌ها) در خروجی doctor.
+اگر کلید OpenAI/Gemini برای gateway داده باشی، کانتینر `lifeagent-litellm` هم بالا می‌آید (`sudo docker compose ps`).
 
 یک چک کامل‌تر (یک درخواست واقعی خیلی کوچک):
 ```bash
@@ -221,7 +234,10 @@ scp -i oracle.key "ubuntu@PUBLIC_IP:~/lifeagent-backups/*.tgz" .
 
 **مالی، سلامت، عادت‌ها**
 - [ ] «۲۵۰ تومن ناهار» → ثبت هزینه. «این ماه چقدر خرج کردم؟» → خلاصه.
-- [ ] عکس یک رسید یا پیامک بانکی → استخراج و ثبت.
+- [ ] عکس یک رسید با توضیح «ثبتش کن» → کارت «🧾 ثبت شد» با دکمه «↩️ لغو». دکمه را بزن → «لغو شد».
+- [ ] عکس رسید **بدون** توضیح → خلاصه + دکمه‌های «✅ ثبت کن / ❌ نه». بعد روی همان عکس ریپلای کن «اینو ثبت کن» → ثبت.
+- [ ] یک پیامک بانکی را کپی یا فوروارد کن → ریال به تومان تبدیل و ثبت شود؛ دوباره بفرست → «احتمالاً تکراری» بپرسد.
+- [ ] دو عکس رسید با هم (آلبوم) → یکجا بررسی و ثبت.
 - [ ] «وزنم ۶۰.۵ شد» → ثبت. «برنامه افزایش وزنم چیه؟» → کالری، پروتئین، تمرین.
 - [ ] «امروز ۲۰ دقیقه مدیتیشن کردم» → ثبت عادت.
 
@@ -233,7 +249,11 @@ scp -i oracle.key "ubuntu@PUBLIC_IP:~/lifeagent-backups/*.tgz" .
 **فایل‌ها**
 - [ ] یک PDF بفرست → خلاصه. «خلاصه‌اش رو PDF کن» → دکمه تأیید → فایل PDF با فارسی درست.
 - [ ] «هزینه‌های این ماه رو اکسل کن» → فایل xlsx.
-- [ ] ویس فارسی و ویس انگلیسی (اگر کلید OpenAI داری) → متن درست و جواب.
+- [ ] ویس فارسی و ویس انگلیسی (اگر کلید Groq یا OpenAI داری) → متن درست و جواب.
+
+**مدل‌ها**
+- [ ] `/model` → فهرست مدل‌ها با دکمه. یک مدل دیگر انتخاب کن، سؤال بپرس، بعد برگرد به `sonnet`.
+- [ ] `/cost` → هزینه به تفکیک مدل.
 
 **امنیت**
 - [ ] یک کار که Bash لازم دارد (مثل ساخت PDF) → دکمه‌های «تأیید / رد / تأیید موارد مشابه تا ۳۰ دقیقه».
@@ -299,7 +319,9 @@ sudo docker compose up -d
 | `DAILY_BUDGET_USD` در `.env` | هشدار وقتی خرج روزانه از سقف رد شد |
 | `LIFEAGENT_EFFORT=low` | ارزان‌تر و سریع‌تر (کمی کم‌دقت‌تر) |
 | خالی گذاشتن روال‌ها (مثلاً `MIDDAY_CHECKIN_TIME=`) | حذف پیام‌های خودکار غیرضروری |
-| `LIFEAGENT_MODEL=claude-opus-5-5` | بیشترین کیفیت (گران‌تر) — فقط اگر لازم شد |
+| `/model` در تلگرام | عوض کردن مدل همان لحظه؛ برای کارهای ساده `haiku` یا `deepseek` |
+| `LIFEAGENT_MODEL=opus` | بیشترین کیفیت (گران‌تر) — فقط اگر لازم شد |
+| `LIFEAGENT_FALLBACK_MODEL` | مدل پشتیبان وقتی ارائه‌دهنده اصلی قطع یا بی‌اعتبار شد |
 
 ---
 
@@ -314,11 +336,13 @@ sudo docker compose up -d
 | `Out of capacity` در Oracle | ظرفیت ARM پر است | Availability Domain دیگر یا چند ساعت بعد |
 | `permission denied` روی `data/` | مالکیت فایل‌ها | `sudo chown -R $(id -u):$(id -g) data workspace && sudo docker compose up -d` |
 | build روی سرور کوچک kill شد | کمبود رم | `free -h` (swap باید باشد)؛ اسکریپت را دوباره اجرا کن |
-| doctor: `Anthropic: HTTP 401` | کلید اشتباه | `python3 deploy/configure.py` |
-| doctor: `HTTP 400 ... credit balance` | اعتبار تمام شده | شارژ در Billing کنسول Anthropic |
+| doctor: `ANTHROPIC_API_KEY: key rejected` یا live با `401` | کلید اشتباه | `python3 deploy/configure.py` |
+| doctor live: `credit balance` / ربات: «اعتبار حساب این مدل تمام شده» | اعتبار تمام شده | شارژ Billing؛ تا آن موقع `/model` یا `LIFEAGENT_FALLBACK_MODEL` |
+| `LiteLLM gateway: unreachable` | کانتینر gateway بالا نیست | `COMPOSE_PROFILES=gateway` در `.env`، بعد `sudo docker compose up -d`؛ `sudo docker compose logs litellm` |
+| مدل غیر Claude: «مدل این درخواست را نپذیرفت» | ناسازگاری پارامتر | مدل دیگری با `/model`؛ برای gateway مطمئن شو `drop_params: true` در config هست |
 | ربات جواب می‌دهد ولی «خطا: …» | خطای داخلی | `sudo docker compose logs --tail 200` را برای Claude بفرست |
 | یادآور اذان نمی‌آید | `PRAYER_REMINDERS` خاموش یا API در دسترس نیست | `.env` را چک کن؛ doctor بخش prayer times؛ ربات هر ۳۰ دقیقه دوباره تلاش می‌کند |
-| ویس کار نمی‌کند | کلید OpenAI ندارد/اشتباه است | `python3 deploy/configure.py` |
+| ویس کار نمی‌کند | کلید Groq/OpenAI ندارد یا اشتباه است | `python3 deploy/configure.py` |
 
 ---
 
@@ -328,12 +352,16 @@ sudo docker compose up -d
 |---|---|---|
 | `TELEGRAM_BOT_TOKEN` | — | توکن ربات (الزامی) |
 | `TELEGRAM_ALLOWED_USER_IDS` | — | شناسه‌های مجاز، با کاما (الزامی) |
-| `ANTHROPIC_API_KEY` | — | کلید Anthropic (الزامی) |
-| `LIFEAGENT_MODEL` / `LIFEAGENT_EFFORT` | `claude-sonnet-5-5` / `medium` | مدل و عمق فکر |
+| `ANTHROPIC_API_KEY` / `OPENROUTER_API_KEY` / `DEEPSEEK_API_KEY` / ... | — | کلید ارائه‌دهنده مدل (حداقل یکی الزامی) — [MODELS.md](MODELS.md) |
+| `OPENAI_API_KEY` / `GEMINI_API_KEY` + `LITELLM_MASTER_KEY` + `COMPOSE_PROFILES=gateway` | — | OpenAI/Gemini از طریق gateway |
+| `LIFEAGENT_MODEL` / `LIFEAGENT_FALLBACK_MODEL` / `LIFEAGENT_EFFORT` | `sonnet` / — / `medium` | مدل پیش‌فرض، پشتیبان و عمق فکر |
 | `MORNING_BRIEF_TIME` / `MIDDAY_CHECKIN_TIME` / `EVENING_CHECKIN_TIME` | `08:00` / `14:00` / `23:00` | روال‌های روزانه (خالی = خاموش) |
 | `WEEKLY_REVIEW` / `AI_DIGEST` | `fri 18:00` / `thu 10:00` | روال‌های هفتگی |
 | `PRAYER_REMINDERS` / `PRAYER_CITY` / `PRAYER_TIMES` | `false` / `Tehran` / `fajr,dhuhr,maghrib` | یادآور اذان |
-| `OPENAI_API_KEY` | — | ویس |
+| `GROQ_API_KEY` / `OPENAI_API_KEY` | — | ویس (Groq رایگان اولویت دارد) |
+| `TAVILY_API_KEY` | — | جستجوی وب برای مدل‌های غیر Claude (بدون آن: Exa رایگان) |
+| `BRSAPI_KEY` | — | قیمت دلار/طلا/سکه بازار آزاد |
+| `FINANCE_CONFIRM_CARDS` | `true` | کارت تأیید با دکمه لغو بعد از ثبت تراکنش |
 | `GITHUB_PERSONAL_ACCESS_TOKEN` | — | GitHub |
 | `GOOGLE_OAUTH_CLIENT_ID` / `_SECRET` / `USER_GOOGLE_EMAIL` | — | Gmail/Calendar/Drive |
 | `DAILY_BUDGET_USD` | — | هشدار هزینه روزانه |

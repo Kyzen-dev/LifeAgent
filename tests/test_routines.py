@@ -9,9 +9,11 @@ from lifeagent.telegram_bot import run_turn
 class FakeBot:
     def __init__(self):
         self.sent = []
+        self.markups = []
 
     async def send_message(self, chat_id, text, **kwargs):
         self.sent.append(text)
+        self.markups.append(kwargs.get("reply_markup"))
 
     async def send_chat_action(self, *args, **kwargs):
         pass
@@ -22,8 +24,10 @@ class FakeAgent:
         self.text = text
         import asyncio
         self.lock = asyncio.Lock()
+        self.prompts = []
 
-    async def ask(self, prompt, on_tool=None):
+    async def ask(self, prompt, on_tool=None, on_notice=None):
+        self.prompts.append(prompt)
         return AgentReply(text=self.text)
 
 

@@ -90,13 +90,14 @@ async def app_checks() -> None:
     from lifeagent.config import Settings
     from lifeagent.context import AppContext, ToolContext
     from lifeagent.db import Database
+    from lifeagent.models import ModelRegistry
     from lifeagent.tools import finance
     from lifeagent.workspace import ensure_workspace, workspace_skills
 
     settings = Settings.from_env()
     ensure_workspace(settings)
     skills = workspace_skills(settings.workspace_dir)
-    check("skills discovered on disk", len(skills) >= 30, str(len(skills)))
+    check("skills discovered on disk", len(skills) >= 33, str(len(skills)))
 
     app = AppContext(settings=settings, db=Database(settings.db_path))
     await app.db.connect()
@@ -104,21 +105,29 @@ async def app_checks() -> None:
     result = await tools["finance_add_transaction"]({"kind": "expense", "amount": 1000, "category": "تست"})
     check("SQLite + tools on the data volume", not result.get("is_error"), str(result)[:120])
 
-    agent = AgentPool(app).get(42)
+    # No API call is made: the CLI only starts and reports what it loaded.
+    pool = AgentPool(app)
+    targets = [
+        ("anthropic", ModelRegistry.load({"ANTHROPIC_API_KEY": "sk-ant-smoke"}), "sonnet"),
+        ("openrouter", ModelRegistry.load({"OPENROUTER_API_KEY": "sk-or-smoke"}), "or-gpt"),
+    ]
     try:
-        client = await asyncio.wait_for(agent._ensure_client(), timeout=180)
-        info = await client.get_server_info() or {}
-        names = {c.get("name") if isinstance(c, dict) else c for c in info.get("commands", [])}
-        agents = {a.get("name") if isinstance(a, dict) else a for a in info.get("agents", [])}
-        check("Claude CLI starts and loads workspace skills", {"upwork-growth", "morning-brief"} <= names,
-              f"{len(names)} commands")
-        check("subagents loaded", {"researcher", "health-coach"} <= agents, str(sorted(agents)))
-    except Exception as exc:  # noqa: BLE001
-        check("Claude CLI starts and loads workspace skills", False, f"{type(exc).__name__}: {exc}")
+        for i, (label, registry, alias) in enumerate(targets):
+            app.models = registry
+            agent = pool.get(42 + i)
+            try:
+                client = await asyncio.wait_for(agent._ensure_client(registry.resolve(alias)), timeout=180)
+                info = await client.get_server_info() or {}
+                names = {c.get("name") if isinstance(c, dict) else c for c in info.get("commands", [])}
+                agents = {a.get("name") if isinstance(a, dict) else a for a in info.get("agents", [])}
+                check(f"Claude CLI starts ({label} model config) and loads workspace skills",
+                      {"upwork-growth", "morning-brief", "expense-capture"} <= names, f"{len(names)} commands")
+                check(f"subagents loaded ({label})", {"researcher", "health-coach"} <= agents, str(sorted(agents)))
+            except Exception as exc:  # noqa: BLE001
+                check(f"Claude CLI starts ({label} model config)", False, f"{type(exc).__name__}: {exc}")
     finally:
-        await agent.close()
+        await pool.close_all()
         await app.db.close()
-
 
 if __name__ == "__main__":
     main()

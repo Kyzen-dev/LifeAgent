@@ -87,8 +87,8 @@ Telegram ──long polling──► lifeagent (python -m lifeagent)
 - **Default model:** `claude-sonnet-5-5`, effort `medium`, adaptive thinking (owner chose "economical"). Override with `LIFEAGENT_MODEL` / `LIFEAGENT_EFFORT`.
 - **Volumes:** `./data → /data` (SQLite `lifeagent.sqlite3`, `HOME=/data/home` incl. `~/.claude` session transcripts used for resume, uv cache, Google tokens); `./workspace → /app/workspace`.
 - **Inbound network:** none required (Telegram long polling). Port `127.0.0.1:8000` is published only for the one-time Google OAuth callback via SSH tunnel.
-- **Outbound domains:** `api.telegram.org`, `api.anthropic.com` (Claude CLI also contacts Anthropic endpoints), `api.openai.com` (voice, optional), `api.githubcopilot.com` + `api.github.com` (optional), `mcp.context7.com`, `api.aladhan.com`, `api.open-meteo.com`, `geocoding-api.open-meteo.com`, `api.coingecko.com`, `api.frankfurter.app`, `www.youtube.com`, Google OAuth/APIs (optional), `pypi.org`/`files.pythonhosted.org` (uvx), `registry.npmjs.org` (browser MCP, optional).
-- **Approximate footprint (to be measured — see T-A4):** Python app ~150 MB + Claude CLI process per active chat ~300–500 MB + optional Google MCP ~150 MB. A 1 GB VM needs swap; 2 GB+ recommended.
+- **Outbound domains:** `api.telegram.org`, `api.anthropic.com` (Claude CLI also contacts Anthropic endpoints), `api.openai.com` / `api.groq.com` (voice, optional), model providers when configured (`openrouter.ai`, `api.deepseek.com`, `api.moonshot.ai`, `api.z.ai`, `generativelanguage.googleapis.com` via the LiteLLM gateway), search MCPs for non-Claude models (`mcp.exa.ai`, `mcp.tavily.com`), `api.brsapi.ir` (optional), `api.githubcopilot.com` + `api.github.com` (optional), `mcp.context7.com`, `api.aladhan.com`, `api.open-meteo.com`, `geocoding-api.open-meteo.com`, `api.coingecko.com`, `api.frankfurter.app`, `www.youtube.com`, Google OAuth/APIs (optional), `pypi.org`/`files.pythonhosted.org` (uvx), `registry.npmjs.org` (browser MCP, optional).
+- **Approximate footprint (to be measured — see T-A4):** Python app ~150 MB + Claude CLI process per active chat ~300–500 MB + optional Google MCP ~150 MB + optional LiteLLM gateway container (unmeasured; likely several hundred MB). A 1 GB VM needs swap; 2 GB+ recommended.
 - **Owner preferences baked into defaults:** routines 08:00 / 14:00 / 23:00 Asia/Tehran, AI digest Thu 10:00, weekly review Fri 18:00, prayer reminders optional (`PRAYER_REMINDERS`).
 
 ---
@@ -158,6 +158,16 @@ Review and propose fixes (with tests) for:
 ### T-G. Model & cost strategy
 Using Anthropic's current docs: validate model IDs and pricing; recommend per-route settings (chat vs routines vs research subagents), prompt caching effectiveness, and a monthly budget forecast for the owner's usage pattern (5 routines/day + ~30 messages/day as a starting assumption). Keep the owner's "economical" preference as the default.
 
+
+### T-I — Multi-provider model layer (added after the first brief)
+`lifeagent/models.py` routes each chat to a provider through Anthropic-compatible endpoints (OpenRouter, DeepSeek,
+Moonshot, Z.ai, a LiteLLM gateway for OpenAI/Gemini/Ollama) by setting `ANTHROPIC_BASE_URL`/`ANTHROPIC_AUTH_TOKEN`
+and the tier-model env vars in the CLI's environment; `/model` switches per chat; `LIFEAGENT_FALLBACK_MODEL` fails over
+for 30 minutes on auth/billing/rate-limit/server errors when no tool ran in the failed turn. Unit tests and a CI job
+that starts the pinned LiteLLM image cover the wiring; **no real non-Claude model has been exercised end to end.**
+Anthropic does not support Claude Code on non-Claude models. Tasks: run `python -m lifeagent.doctor --live --model all`
+with real keys; build a small tool-use eval (record an expense from a receipt photo, set a reminder, run a skill) per
+model and report pass rates and cost; measure the gateway's RAM; decide which non-Claude models stay in the catalog.
 ### T-H. Live acceptance test plan
 Turn §5 of `docs/DEPLOY.md` (the checklist) into an acceptance script the owner can run on the first deploy, plus `python -m lifeagent.doctor --live` criteria. Define pass/fail per item and how to collect logs (`docker compose logs --tail 200`).
 

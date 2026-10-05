@@ -25,3 +25,21 @@ services:
       # If the callback does not arrive (server bound to 127.0.0.1 inside the container),
       # temporarily replace `ports` with `network_mode: host` for the first login.
       - "127.0.0.1:8000:8000"
+
+  # Optional LiteLLM gateway for OpenAI / Gemini / local models (see deploy/litellm/config.yaml).
+  # Started only with the "gateway" profile: COMPOSE_PROFILES=gateway in .env (set by the wizard).
+  # The bot reaches it at http://litellm:4000 on the compose network; it is not published.
+  litellm:
+    image: docker.litellm.ai/berriai/litellm:1.104.0
+    profiles: ["gateway"]
+    container_name: lifeagent-litellm
+    restart: unless-stopped
+    env_file: .env
+    command: ["--config", "/app/config.yaml", "--port", "4000"]
+    volumes:
+      - ./deploy/litellm/config.yaml:/app/config.yaml:ro
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

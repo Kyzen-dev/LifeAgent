@@ -11,6 +11,7 @@ import json
 from pathlib import Path
 from typing import Any, Literal
 
+from .mcp_servers import SEARCH_SERVERS
 from .tools import SERVER_NAME
 
 Decision = Literal["allow", "ask", "deny"]
@@ -32,6 +33,13 @@ ALLOWED_TOOLS = [
     f"mcp__{SERVER_NAME}",  # local personal-data tools (SQLite) are always allowed
     "mcp__context7",  # documentation lookup only
 ]
+
+
+
+def allowed_tools(mcp_servers: dict[str, Any]) -> list[str]:
+    """ALLOWED_TOOLS plus the read-only search servers present in this session."""
+    return ALLOWED_TOOLS + [f"mcp__{name}" for name in SEARCH_SERVERS if name in mcp_servers]
+
 
 # MCP tool names that only read (Gmail/Calendar/Drive/GitHub naming conventions).
 READ_PREFIXES = (

@@ -12,6 +12,13 @@ SCHEMA = """
 CREATE TABLE IF NOT EXISTS chat_sessions (
     chat_id     INTEGER PRIMARY KEY,
     session_id  TEXT NOT NULL,
+    updated_at  TEXT NOT NULL,
+    provider    TEXT                        -- a session is only resumed on the same provider
+);
+
+CREATE TABLE IF NOT EXISTS chat_settings (
+    chat_id     INTEGER PRIMARY KEY,
+    model       TEXT,                       -- alias from lifeagent.models, NULL = default
     updated_at  TEXT NOT NULL
 );
 
@@ -20,7 +27,10 @@ CREATE TABLE IF NOT EXISTS usage (
     chat_id   INTEGER NOT NULL,
     ts        TEXT NOT NULL,
     cost_usd  REAL NOT NULL,
-    turns     INTEGER NOT NULL
+    turns     INTEGER NOT NULL,
+    model     TEXT,
+    input_tokens  INTEGER,
+    output_tokens INTEGER
 );
 
 CREATE TABLE IF NOT EXISTS transactions (
@@ -32,7 +42,13 @@ CREATE TABLE IF NOT EXISTS transactions (
     category  TEXT NOT NULL,
     account   TEXT,
     note      TEXT,
-    created_at TEXT NOT NULL
+    created_at TEXT NOT NULL,
+    merchant  TEXT,                       -- shop, payee or payer
+    items     TEXT,                       -- JSON list of {name, qty, price} from a receipt
+    source    TEXT,                       -- manual / receipt / invoice / bank_sms / voice / forward / import
+    attachment TEXT,                      -- workspace-relative path of the receipt image or PDF
+    original_amount   REAL,               -- as written on the source, e.g. Rial before /10
+    original_currency TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_tx_date ON transactions(date);
 
@@ -167,7 +183,20 @@ CREATE TABLE IF NOT EXISTS reminders (
 # SCHEMA above always describes the latest tables for fresh installs; an existing
 # database is brought forward one step at a time and PRAGMA user_version records
 # where it is. Example:  2: ["ALTER TABLE tasks ADD COLUMN estimate_min INTEGER"]
-MIGRATIONS: dict[int, list[str]] = {}
+MIGRATIONS: dict[int, list[str]] = {
+    2: [
+        "ALTER TABLE chat_sessions ADD COLUMN provider TEXT",
+        "ALTER TABLE usage ADD COLUMN model TEXT",
+        "ALTER TABLE usage ADD COLUMN input_tokens INTEGER",
+        "ALTER TABLE usage ADD COLUMN output_tokens INTEGER",
+        "ALTER TABLE transactions ADD COLUMN merchant TEXT",
+        "ALTER TABLE transactions ADD COLUMN items TEXT",
+        "ALTER TABLE transactions ADD COLUMN source TEXT",
+        "ALTER TABLE transactions ADD COLUMN attachment TEXT",
+        "ALTER TABLE transactions ADD COLUMN original_amount REAL",
+        "ALTER TABLE transactions ADD COLUMN original_currency TEXT",
+    ],
+}
 SCHEMA_VERSION = max(MIGRATIONS, default=1)
 
 
@@ -231,18 +260,39 @@ class Database:
 
     # --- sessions -------------------------------------------------------
 
-    async def get_session(self, chat_id: int) -> str | None:
-        row = await self.fetchone(
-            "SELECT session_id FROM chat_sessions WHERE chat_id = ?", (chat_id,)
-        )
-        return row["session_id"] if row else None
+    async def get_session(self, chat_id: int, provider: str | None = None) -> str | None:
+        """The chat's session id; with provider, only if it was made on that provider.
 
-    async def set_session(self, chat_id: int, session_id: str) -> None:
+        Sessions written before providers were tracked (provider NULL) came from Anthropic.
+        """
+        row = await self.fetchone(
+            "SELECT session_id, provider FROM chat_sessions WHERE chat_id = ?", (chat_id,)
+        )
+        if not row:
+            return None
+        if provider is not None and (row["provider"] or "anthropic") != provider:
+            return None
+        return row["session_id"]
+
+    async def set_session(self, chat_id: int, session_id: str, provider: str | None = None) -> None:
         await self.execute(
-            "INSERT INTO chat_sessions (chat_id, session_id, updated_at) VALUES (?, ?, ?) "
+            "INSERT INTO chat_sessions (chat_id, session_id, updated_at, provider) VALUES (?, ?, ?, ?) "
             "ON CONFLICT(chat_id) DO UPDATE SET session_id = excluded.session_id, "
-            "updated_at = excluded.updated_at",
-            (chat_id, session_id, utcnow_iso()),
+            "updated_at = excluded.updated_at, provider = excluded.provider",
+            (chat_id, session_id, utcnow_iso(), provider),
+        )
+
+    # --- per-chat settings ---------------------------------------------
+
+    async def get_chat_model(self, chat_id: int) -> str | None:
+        row = await self.fetchone("SELECT model FROM chat_settings WHERE chat_id = ?", (chat_id,))
+        return row["model"] if row else None
+
+    async def set_chat_model(self, chat_id: int, model: str | None) -> None:
+        await self.execute(
+            "INSERT INTO chat_settings (chat_id, model, updated_at) VALUES (?, ?, ?) "
+            "ON CONFLICT(chat_id) DO UPDATE SET model = excluded.model, updated_at = excluded.updated_at",
+            (chat_id, model, utcnow_iso()),
         )
 
     async def clear_session(self, chat_id: int) -> None:
@@ -250,10 +300,27 @@ class Database:
 
     # --- usage ----------------------------------------------------------
 
-    async def add_usage(self, chat_id: int, cost_usd: float, turns: int) -> None:
+    async def add_usage(
+        self,
+        chat_id: int,
+        cost_usd: float,
+        turns: int,
+        model: str | None = None,
+        input_tokens: int | None = None,
+        output_tokens: int | None = None,
+    ) -> None:
         await self.execute(
-            "INSERT INTO usage (chat_id, ts, cost_usd, turns) VALUES (?, ?, ?, ?)",
-            (chat_id, utcnow_iso(), cost_usd, turns),
+            "INSERT INTO usage (chat_id, ts, cost_usd, turns, model, input_tokens, output_tokens) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (chat_id, utcnow_iso(), cost_usd, turns, model, input_tokens, output_tokens),
+        )
+
+    async def usage_by_model(self, since_iso_utc: str) -> list[dict[str, Any]]:
+        return await self.fetchall(
+            "SELECT COALESCE(model, '?') AS model, SUM(cost_usd) AS cost, COUNT(*) AS turns, "
+            "SUM(COALESCE(input_tokens, 0)) AS input_tokens, SUM(COALESCE(output_tokens, 0)) AS output_tokens "
+            "FROM usage WHERE ts >= ? GROUP BY COALESCE(model, '?') ORDER BY cost DESC",
+            (since_iso_utc,),
         )
 
     async def cost_since(self, since_iso_utc: str) -> float:

@@ -50,7 +50,7 @@ cd "$DIR"
 
 # 4. Personal settings: run the wizard when .env is missing or incomplete.
 needs_config() {
-  [ ! -f .env ] || grep -qE '^(TELEGRAM_BOT_TOKEN|TELEGRAM_ALLOWED_USER_IDS|ANTHROPIC_API_KEY)=[[:space:]]*$' .env
+  ! python3 deploy/configure.py --complete
 }
 if needs_config; then
   if [ -t 0 ]; then
