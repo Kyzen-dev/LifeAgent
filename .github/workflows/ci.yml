@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements-dev.txt ruff
+      - run: ruff check --select E,F,W,B --ignore E501 lifeagent tests deploy
+      - run: python -m pytest -q
+      - run: bash -n deploy/setup-server.sh
+
+  docker:
+    needs: test
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+          - platform: linux/arm64   # Oracle Cloud Always Free (Ampere)
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: ${{ matrix.platform }}
+          load: true
+          tags: lifeagent:ci
+          cache-from: type=gha,scope=${{ matrix.platform }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.platform }}
+      - name: Smoke test inside the image (as an arbitrary non-root user)
+        run: |
+          # Same layout as production: data and workspace are host folders owned by the run user.
+          mkdir -p ci-data && cp -r workspace ci-workspace && sudo chown -R 1234:1234 ci-data ci-workspace
+          docker run --rm --user 1234:1234 \
+            -v "$PWD/deploy:/smoke:ro" -v "$PWD/ci-data:/data" -v "$PWD/ci-workspace:/app/workspace" \
+            lifeagent:ci python /smoke/container_smoke.py

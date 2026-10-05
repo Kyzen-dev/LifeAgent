@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import os
+from pathlib import Path
 
 from dotenv import load_dotenv
 
@@ -15,6 +16,9 @@ from .telegram_bot import build_application
 
 def main() -> None:
     load_dotenv()
+    # In Docker HOME lives on the data volume (~/.claude sessions, uv cache); make sure it exists.
+    if os.environ.get("HOME"):
+        Path(os.environ["HOME"]).mkdir(parents=True, exist_ok=True)
     logging.basicConfig(
         level=os.environ.get("LOG_LEVEL", "INFO"),
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",

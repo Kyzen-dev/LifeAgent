@@ -48,22 +48,31 @@ else
 fi
 cd "$DIR"
 
-# 4. Personal files.
-if [ ! -f .env ]; then
-  cp .env.example .env
-  say "Created .env from the example. Fill in TELEGRAM_BOT_TOKEN, TELEGRAM_ALLOWED_USER_IDS and ANTHROPIC_API_KEY:"
-  echo "    nano $DIR/.env      # then re-run this script"
-  exit 0
+# 4. Personal settings: run the wizard when .env is missing or incomplete.
+needs_config() {
+  [ ! -f .env ] || grep -qE '^(TELEGRAM_BOT_TOKEN|TELEGRAM_ALLOWED_USER_IDS|ANTHROPIC_API_KEY)=[[:space:]]*$' .env
+}
+if needs_config; then
+  if [ -t 0 ]; then
+    say "Let's configure the bot (keys are checked as you type them)"
+    python3 deploy/configure.py
+  fi
+  if needs_config; then
+    echo "Required values are missing. Run:  cd $DIR && python3 deploy/configure.py   then re-run this script." >&2
+    exit 1
+  fi
+else
+  say "Checking the keys in .env"
+  python3 deploy/configure.py --check || { echo "Fix .env with: python3 deploy/configure.py" >&2; exit 1; }
 fi
-if grep -qE '^(TELEGRAM_BOT_TOKEN|TELEGRAM_ALLOWED_USER_IDS|ANTHROPIC_API_KEY)=\s*$' .env; then
-  echo "Some required values in .env are still empty. Edit $DIR/.env and re-run." >&2
-  exit 1
-fi
-[ -f workspace/memory/profile.md ] || echo "Tip: copy your personal profile.md to $DIR/workspace/memory/profile.md"
+[ -f workspace/memory/profile.md ] || echo "Tip: copy your personal profile.md to $DIR/workspace/memory/profile.md before the first chat."
 
-# 5. Permissions for the container user (uid 1000).
-mkdir -p data
-sudo chown -R 1000:1000 data workspace
+# 5. The container runs as this user, so the bot and git can both write the files.
+uid=$(id -u); gid=$(id -g)
+grep -q '^LIFEAGENT_UID=' .env && sed -i "s/^LIFEAGENT_UID=.*/LIFEAGENT_UID=$uid/" .env || echo "LIFEAGENT_UID=$uid" >> .env
+grep -q '^LIFEAGENT_GID=' .env && sed -i "s/^LIFEAGENT_GID=.*/LIFEAGENT_GID=$gid/" .env || echo "LIFEAGENT_GID=$gid" >> .env
+mkdir -p data/home
+sudo chown -R "$uid:$gid" data workspace
 
 # 6. Build and start.
 say "Building and starting the bot (first build takes a few minutes)"

@@ -153,7 +153,7 @@ tar czf ~/backup-$(date +%F).tgz data workspace/memory workspace/notes   # پش�
 |---|---|
 | ربات اصلاً جواب نمی‌دهد | `docker compose logs`؛ شناسه‌ات در `TELEGRAM_ALLOWED_USER_IDS` درست است؟ |
 | `Conflict: terminated by other getUpdates request` | همین توکن جای دیگری هم اجرا است (Codespaces و سرور با هم). یکی را خاموش کن یا ربات تستی جدا بساز |
-| `permission denied` روی `data/` | `sudo chown -R 1000:1000 data workspace` |
+| `permission denied` روی `data/` | `sudo chown -R $(id -u):$(id -g) data workspace` و بعد `docker compose up -d` |
 | build روی سرور ۱ گیگی kill شد | swap را چک کن (`free -h`)؛ اسکریپت را دوباره اجرا کن |
 | `doctor` می‌گوید Anthropic خطا | کلید یا اعتبار (Billing) را چک کن؛ `--live` پیام دقیق را نشان می‌دهد |
 | یادآور اذان نمی‌آید | `doctor` بخش prayer times؛ اگر aladhan.com در دسترس نباشد، ربات هر ۳۰ دقیقه دوباره امتحان می‌کند |

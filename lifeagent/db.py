@@ -163,6 +163,14 @@ CREATE TABLE IF NOT EXISTS reminders (
 """
 
 
+# Schema changes after the first release go here, keyed by the version they produce.
+# SCHEMA above always describes the latest tables for fresh installs; an existing
+# database is brought forward one step at a time and PRAGMA user_version records
+# where it is. Example:  2: ["ALTER TABLE tasks ADD COLUMN estimate_min INTEGER"]
+MIGRATIONS: dict[int, list[str]] = {}
+SCHEMA_VERSION = max(MIGRATIONS, default=1)
+
+
 def utcnow_iso() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
@@ -177,8 +185,24 @@ class Database:
         self._conn.row_factory = aiosqlite.Row
         await self._conn.execute("PRAGMA journal_mode=WAL")
         await self._conn.execute("PRAGMA foreign_keys=ON")
+        async with self._conn.execute("PRAGMA user_version") as cursor:
+            version = (await cursor.fetchone())[0]
+        is_new = not await self._has_tables()
         await self._conn.executescript(SCHEMA)
+        if is_new:
+            version = SCHEMA_VERSION  # fresh install: SCHEMA is already the latest
+        for target in sorted(v for v in MIGRATIONS if v > max(version, 1)):
+            for statement in MIGRATIONS[target]:
+                await self._conn.execute(statement)
+            version = target
+        await self._conn.execute(f"PRAGMA user_version = {max(version, 1)}")
         await self._conn.commit()
+
+    async def _has_tables(self) -> bool:
+        async with self.conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'chat_sessions'"
+        ) as cursor:
+            return await cursor.fetchone() is not None
 
     async def close(self) -> None:
         if self._conn:

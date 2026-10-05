@@ -5,6 +5,8 @@ services:
       args:
         INSTALL_BROWSER: "false"   # "true" + ENABLE_BROWSER=true in .env for the headless browser
     container_name: lifeagent
+    # Run as the host user that owns ./data and ./workspace (setup-server.sh records it in .env).
+    user: "${LIFEAGENT_UID:-1000}:${LIFEAGENT_GID:-1000}"
     restart: unless-stopped
     env_file: .env
     volumes:
