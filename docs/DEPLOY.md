@@ -178,7 +178,7 @@ crontab -e      # اگر پرسید کدام ویرایشگر، 1 (nano) را ب
 ```
 این خط را آخر فایل اضافه کن، ذخیره کن (Ctrl+O، Enter، Ctrl+X):
 ```
-0 4 * * * cd ~/lifeagent && bash deploy/backup.sh >> ~/lifeagent-backups/backup.log 2>&1
+0 4 * * * mkdir -p ~/lifeagent-backups && cd ~/lifeagent && bash deploy/backup.sh >> ~/lifeagent-backups/backup.log 2>&1
 ```
 هر روز ساعت ۴ صبح (به وقت سرور) یک پشتیبان سازگار در `~/lifeagent-backups/` ساخته می‌شود و پشتیبان‌های قدیمی‌تر از ۱۴ روز پاک می‌شوند. همین حالا یک بار دستی تست کن: `bash deploy/backup.sh`.
 ماهی یک بار پشتیبان‌ها را روی کامپیوتر خودت بیاور:

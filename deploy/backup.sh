@@ -2,7 +2,7 @@
 # Consistent backup of LifeAgent data, safe while the bot is running.
 #   bash deploy/backup.sh                 # writes ~/lifeagent-backups/lifeagent-YYYY-MM-DD_HHMM.tgz
 # Daily at 04:00 with 14 days kept (add with `crontab -e`):
-#   0 4 * * * cd ~/lifeagent && bash deploy/backup.sh >> ~/lifeagent-backups/backup.log 2>&1
+#   0 4 * * * mkdir -p ~/lifeagent-backups && cd ~/lifeagent && bash deploy/backup.sh >> ~/lifeagent-backups/backup.log 2>&1
 set -euo pipefail
 cd "$(dirname "$0")/.."
 

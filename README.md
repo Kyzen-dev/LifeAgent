@@ -89,6 +89,8 @@ alirezarezvani/claude-skills) و با مجوزشان در `workspace/.claude/ski
 
 > 📘 **راهنمای کامل قدم‌به‌قدم از صفر (Codespaces برای تست، Oracle Cloud Always Free برای اجرای دائمی، چک‌لیست تست، نگهداری و رفع اشکال):** [`docs/DEPLOY.md`](docs/DEPLOY.md)
 >
+> 🖥 **همین راهنما به‌صورت صفحه HTML آفلاین** (فونت داخلش، با دکمه کپی و جایگزینی خودکار IP): [`docs/setup-guide.html`](docs/setup-guide.html) — دانلود کن و با مرورگر باز کن.
+>
 > 🗺 **نقشه توسعه:** [`docs/ROADMAP.md`](docs/ROADMAP.md)
 >
 > 🧙 **ویزارد تنظیمات** (کلیدها را همان لحظه چک می‌کند): `python3 deploy/configure.py`
