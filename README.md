@@ -1,5 +1,7 @@
 # LifeAgent — دستیار شخصی هوشمند در تلگرام
 
+[![CI](https://github.com/Kyzen-dev/LifeAgent/actions/workflows/ci.yml/badge.svg)](https://github.com/Kyzen-dev/LifeAgent/actions/workflows/ci.yml)
+
 یک دستیار شخصی و کاری ۲۴ساعته که روی **Claude Agent SDK** ساخته شده و از طریق **تلگرام** با آن حرف می‌زنی.
 به Gmail، Google Calendar، Drive و GitHub وصل می‌شود، مالی و عادت‌ها و سلامتت را ثبت و تحلیل می‌کند،
 یادآور می‌فرستد، هر صبح گزارش می‌دهد و هر هفته با تو بازبینی می‌کند.
@@ -85,7 +87,11 @@ alirezarezvani/claude-skills) و با مجوزشان در `workspace/.claude/ski
 
 ## راه‌اندازی
 
-> 📘 **راهنمای کامل راه‌اندازی رایگان (Codespaces برای تست، Oracle Cloud Always Free برای اجرای دائمی) و چک‌لیست تست:** [`docs/DEPLOY.md`](docs/DEPLOY.md)
+> 📘 **راهنمای کامل قدم‌به‌قدم از صفر (Codespaces برای تست، Oracle Cloud Always Free برای اجرای دائمی، چک‌لیست تست، نگهداری و رفع اشکال):** [`docs/DEPLOY.md`](docs/DEPLOY.md)
+>
+> 🗺 **نقشه توسعه:** [`docs/ROADMAP.md`](docs/ROADMAP.md)
+>
+> 🧙 **ویزارد تنظیمات** (کلیدها را همان لحظه چک می‌کند): `python3 deploy/configure.py`
 >
 > چک سلامت هر زمان: `python -m lifeagent.doctor` (با `--live` یک درخواست واقعی کوچک هم می‌فرستد).
 
