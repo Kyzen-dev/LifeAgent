@@ -164,7 +164,16 @@ Using Anthropic's current docs: validate model IDs and pricing; recommend per-ro
 Moonshot, Z.ai, a LiteLLM gateway for OpenAI/Gemini/Ollama) by setting `ANTHROPIC_BASE_URL`/`ANTHROPIC_AUTH_TOKEN`
 and the tier-model env vars in the CLI's environment; `/model` switches per chat; `LIFEAGENT_FALLBACK_MODEL` fails over
 for 30 minutes on auth/billing/rate-limit/server errors when no tool ran in the failed turn. Unit tests and a CI job
-that starts the pinned LiteLLM image cover the wiring; **no real non-Claude model has been exercised end to end.**
+that starts the pinned LiteLLM image cover the wiring. Verified so far: (1) CI starts
+`docker.litellm.ai/berriai/litellm:1.104.0` with `deploy/litellm/config.yaml`, `/v1/models` lists the four gateway
+models, a `/v1/messages` call is translated and reaches OpenAI (fake key → Anthropic-format `authentication_error`), and
+the master key is enforced; (2) `tests/test_cli_routing.py` runs the bundled CLI against a local fake Messages API:
+the provider key is sent as `Authorization: Bearer`, no `x-api-key`, `thinking` omitted, `max_tokens` capped, and a host
+`CLAUDE_CODE_OAUTH_TOKEN`/`ANTHROPIC_API_KEY` never leaks (without the `CLAUDE_CODE_OAUTH_TOKEN=""` guard it does leak).
+Observed: CLI 2.1.x still sends `output_config.effort` and `anthropic-beta` headers (claude-code, interleaved-thinking,
+mid-conversation-system, effort) to custom endpoints even with `CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS=1` and empty
+`*_SUPPORTED_CAPABILITIES`; LiteLLM drops them (`drop_params`), direct providers must tolerate them.
+**No real non-Claude model has been exercised end to end yet.**
 Anthropic does not support Claude Code on non-Claude models. Tasks: run `python -m lifeagent.doctor --live --model all`
 with real keys; build a small tool-use eval (record an expense from a receipt photo, set a reminder, run a skill) per
 model and report pass rates and cost; measure the gateway's RAM; decide which non-Claude models stay in the catalog.
