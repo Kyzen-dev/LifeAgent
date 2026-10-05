@@ -93,6 +93,8 @@ alirezarezvani/claude-skills) و با مجوزشان در `workspace/.claude/ski
 >
 > 🗺 **نقشه توسعه:** [`docs/ROADMAP.md`](docs/ROADMAP.md)
 >
+> 🤖 **سند تحویل به agent پیاده‌سازی (تحلیل سرور، استقرار و عملیات):** [`docs/IMPLEMENTATION_BRIEF.md`](docs/IMPLEMENTATION_BRIEF.md)
+>
 > 🧙 **ویزارد تنظیمات** (کلیدها را همان لحظه چک می‌کند): `python3 deploy/configure.py`
 >
 > چک سلامت هر زمان: `python -m lifeagent.doctor` (با `--live` یک درخواست واقعی کوچک هم می‌فرستد).

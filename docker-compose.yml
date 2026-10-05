@@ -8,7 +8,15 @@ services:
     # Run as the host user that owns ./data and ./workspace (setup-server.sh records it in .env).
     user: "${LIFEAGENT_UID:-1000}:${LIFEAGENT_GID:-1000}"
     restart: unless-stopped
+    # tini as PID 1 reaps orphaned processes left by the Claude CLI and MCP servers.
+    init: true
     env_file: .env
+    # Keep Docker's log files bounded on small disks.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     volumes:
       - ./data:/data                    # SQLite DB, ~/.claude sessions, Google tokens
       - ./workspace:/app/workspace      # memory, notes, skills, subagents (editable on the host)
