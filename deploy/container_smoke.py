@@ -52,8 +52,12 @@ def check_pdf() -> None:
 
     pdf = Path("/tmp/smoke.pdf")
     HTML(string='<html dir="rtl"><body style="font-family: Vazirmatn">گزارش مالی مهر ۱۴۰۵</body></html>').write_pdf(pdf)
-    text = PdfReader(str(pdf)).pages[0].extract_text()
-    check("Persian PDF renders", pdf.stat().st_size > 1000 and "۱۴۰۵" in text, f"{pdf.stat().st_size} bytes")
+    page = PdfReader(str(pdf)).pages[0]
+    # Text extraction from RTL PDFs drops/reorders digits, so check the words and the embedded font.
+    text = page.extract_text()
+    fonts = {str(f.get_object()["/BaseFont"]) for f in page["/Resources"]["/Font"].values()}
+    check("Persian PDF text", "گزارش" in text and "مالی" in text, repr(text))
+    check("Persian PDF embeds Vazirmatn", any("Vazirmatn" in f for f in fonts), str(fonts))
 
 
 def main() -> None:
